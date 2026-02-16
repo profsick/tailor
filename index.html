@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Tailors</title>
+  <link href="styles.css" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+    rel="stylesheet">
+
+  <!-- Supabase Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Your Script -->
+  <script src="script.js" defer></script>
+</head>
+
+<nav>
+  <h1>LOGO</h1>
+  <div class="nav-right">
+    <a href="#about-section" class="contact-us">Contact Us</a>
+    <a href="orders.html" class="contact-us orders-link is-hidden">Your Orders</a>
+    <!-- CART ICON -->
+    <a href="cart.html" id="cartIcon" class="cart-icon-nav">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="9" cy="21" r="1"></circle>
+        <circle cx="20" cy="21" r="1"></circle>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+      </svg>
+      <span id="cartCount" class="cart-count">0</span>
+    </a>
+  </div>
+</nav>
+
+<body>
+
+  <section class="front fullscreen-section">
+    <div class="container">
+      <h1>Dress better<br>Farm <button class="aura">AURA. </button>
+      </h1>
+      <div class="img-container">
+        <img class="grid-img" src="assets/model.png" alt="mode images" />
+        <img class="grid-img" src="assets/model1.png" alt="mode images" />
+        <img class="grid-img" src="assets/tuxedo.jpg" alt="mode images" />
+        <img class="grid-img model2" src="assets/model2.jpeg" alt="mode images" />
+        <img class="grid-img anotherone" src="assets/anotherone.jpg" alt="mode images" />
+        <img class="grid-img" src="assets/model4.jpg" alt="mode images" />
+
+      </div>
+    </div>
+
+  </section>
+
+  <!-- INSTRUCTIONS SECTION -->
+  <section class="instructions-section">
+    <div class="instructions-container">
+      <h2 class="instructions-heading">How To Use</h2>
+
+      <div class="instructions-grid">
+        <div class="instruction-step step-1">
+          <div class="step-number">01</div>
+          <h3 class="step-title">Choose Your Clothing</h3>
+          <p class="step-description">We offer suits, tuxedos, pants and shirts tailored to perfection.</p>
+        </div>
+
+        <div class="instruction-step step-2">
+          <div class="step-number">02</div>
+          <h3 class="step-title">Choose Your Fabric</h3>
+          <p class="step-description">Select from our premium collection of quality fabrics and materials.</p>
+        </div>
+
+        <div class="instruction-step step-3">
+          <div class="step-number">03</div>
+          <h3 class="step-title">Enter Your Measurements</h3>
+          <p class="step-description">Ask your partner to take your measurements. FOR INSTRUCTIONS CLICK <a href="#"
+              class="measurement-link">HERE</a></p>
+        </div>
+
+        <div class="instruction-step step-4">
+          <div class="step-number">04</div>
+          <h3 class="step-title">Checkout & Wait for Call</h3>
+          <p class="step-description">Complete your order and we'll call you with updates and confirmation.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="brand-story">
+    <div class="brand-container">
+      <h2 class="brand-heading">Crafted With Precision.</h2>
+      <p class="brand-text">
+        At <span class="brand-name">AURA</span>, tailoring is more than craftsmanship — it is identity sculpted in
+        fabric.
+        Every stitch is intentional, every cut engineered for presence. We do not produce garments; we construct
+        confidence.
+        From the precision of the shoulder line to the fall of the fabric, each piece is measured, refined, and
+        perfected
+        to embody quiet power. This is not ready-to-wear. This is made-for-you.
+      </p>
+      <div class="brand-buttons">
+        <button id="orderOnlineBtn" class="brand-btn primary">Order Online</button>
+        <button id="visitUsBtn" class="brand-btn secondary">Visit Us</button>
+      </div>
+      <div class="separator-line"></div>
+
+    </div>
+
+  </section>
+
+
+
+  <section class="second" id="clothing-section">
+    <h2>1. Choose Your Clothing.</h2>
+
+    <div class="types">
+      <label class="clothing-label">
+        <input type="checkbox" name="options" value="1" class="img-checkbox clothing-checkbox">
+        <img src="assets/tuxedo2.jpg" class="tuxedo type clothing-img" alt="Tuxedo">
+      </label>
+      <label class="clothing-label">
+        <input type="checkbox" name="options" value="1" class="img-checkbox clothing-checkbox">
+        <img src="assets/trousers.jpg" class="trousers type clothing-img" alt="Trousers">
+      </label>
+      <label class="clothing-label">
+        <input type="checkbox" name="options" value="1" class="img-checkbox clothing-checkbox">
+        <img src="assets/suit.jpg" class="suit type clothing-img" alt="Suit">
+      </label>
+      <label class="clothing-label">
+        <input type="checkbox" name="options" value="1" class="img-checkbox clothing-checkbox">
+        <img src="assets/shirt.jpg" class="shirt type clothing-img" alt="Shirt">
+      </label>
+      <label class="clothing-label">
+        <input type="checkbox" name="options" value="1" class="img-checkbox clothing-checkbox">
+        <img src="assets/sherwani.jpg" class="sherwani type clothing-img" alt="Sherwani">
+      </label>
+      <label class="clothing-label">
+        <input type="checkbox" name="options" value="1" class="img-checkbox clothing-checkbox">
+        <img src="assets/thobe.jpg" class="thobe type clothing-img" alt="Thobe">
+      </label>
+    </div>
+
+  </section>
+
+  <section class="fabric">
+    <h2>2. Choose Your Fabric.</h2>
+    <div class="fabric-grid">
+      <label class="fabric-label">
+        <input type="checkbox" name="options" value="1" class="img-checkbox fabric-checkbox">
+        <img src="assets/fabric.jpg" class="fabric-img" alt="Fabric Option 1">
+      </label>
+      <label class="fabric-label">
+        <input type="checkbox" name="options" value="1" class="img-checkbox fabric-checkbox">
+        <img src="assets/fabric.jpg" class="fabric-img" alt="Fabric Option 2">
+      </label>
+      <label class="fabric-label">
+        <input type="checkbox" name="options" value="1" class="img-checkbox fabric-checkbox">
+        <img src="assets/fabric.jpg" class="fabric-img" alt="Fabric Option 3">
+      </label>
+      <label class="fabric-label">
+        <input type="checkbox" name="options" value="1" class="img-checkbox fabric-checkbox">
+        <img src="assets/fabric.jpg" class="fabric-img" alt="Fabric Option 4">
+      </label>
+      <label class="fabric-label">
+        <input type="checkbox" name="options" value="1" class="img-checkbox fabric-checkbox">
+        <img src="assets/fabric.jpg" class="fabric-img" alt="Fabric Option 5">
+      </label>
+
+
+    </div>
+
+  </section>
+
+  <section class="measurements" id="measurementsSection">
+    <div class="form-section">
+      <h3>Measurements (in inches)</h3>
+      <div class="measurements-grid">
+        <div class="form-group">
+          <label>Full Shoulder:</label>
+          <input type="number" name="fullShoulder" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Full Sleeve:</label>
+          <input type="number" name="fullSleeve" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Full Chest:</label>
+          <input type="number" name="fullChest" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Waist/Stomach:</label>
+          <input type="number" name="waist" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Hips:</label>
+          <input type="number" name="hips" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Front Chest:</label>
+          <input type="number" name="frontChest" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Back Chest:</label>
+          <input type="number" name="backChest" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Jacket Length:</label>
+          <input type="number" name="jacket" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Pants Waist:</label>
+          <input type="number" name="pantsWaist" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Low Hip:</label>
+          <input type="number" name="lowHip" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Thigh:</label>
+          <input type="number" name="thigh" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Crotch:</label>
+          <input type="number" name="crotch" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Pant Length:</label>
+          <input type="number" name="pantLength" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Bicep:</label>
+          <input type="number" name="bicep" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Neck:</label>
+          <input type="number" name="neck" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Cuffs:</label>
+          <input type="number" name="cuffs" step="0.1">
+        </div>
+      </div>
+    </div>
+
+    <div class="save-measurement-container">
+      <button id="saveMeasurementBtn" class="save-measurement-btn">
+        Save Measurement
+      </button>
+    </div>
+
+    <div id="measurementsSummary" class="measurements-summary is-hidden">
+      <h4>Your Saved Measurements</h4>
+      <div id="measurementsSummaryDisplay" class="measurements-grid"></div>
+      <button id="editMeasurementsSummaryBtn" class="edit-measurements-btn">
+        Edit Measurements
+      </button>
+    </div>
+
+  </section>
+
+  <section class="about-brand" id="about-section">
+    <div class="about-container">
+      <h2 class="about-heading">Visit Us</h2>
+      <p class="about-text">
+        Visit us at: <span class="highlight">123 Tailor Street, Fashion City</span><br>
+        Call us: <span class="highlight">+1 234 567 890</span><br>
+        Email: <span class="highlight">hello@aura.com</span><br>
+        Follow us:
+        <span class="highlight">@AuraTailors</span> |
+        <span class="highlight">@AuraStyle</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- MEASUREMENT GUIDE MODAL -->
+  <div id="measurementModal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close">&times;</button>
+      <img src="assets/measurement-refrence.png" alt="Measurement Guide" class="modal-image">
+    </div>
+  </div>
+
+</body>
+<footer>made by kashif</footer>
+
+</html>
