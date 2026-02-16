@@ -16,6 +16,8 @@ const PRICING = {
   pant: 800,
   suit: 6000,
   tuxedo: 8000,
+  sherwani: 10000,
+  thobe: 5000,
 };
 
 // =====================================================
@@ -1206,11 +1208,11 @@ document.addEventListener("DOMContentLoaded", function () {
         // Get the clothing image info
         const label = this.closest("label");
         const img = label.querySelector(".type");
-        // Get the actual clothing type (tuxedo, trousers, suit, shirt)
+        // Get the actual clothing type (tuxedo, trousers, suit, shirt, sherwani, thobe)
         const classes = img.className.split(" ");
         let clothingName = "Garment";
         for (let cls of classes) {
-          if (["tuxedo", "trousers", "suit", "shirt"].includes(cls)) {
+          if (["tuxedo", "trousers", "suit", "shirt", "sherwani", "thobe"].includes(cls)) {
             clothingName = cls.charAt(0).toUpperCase() + cls.slice(1);
             break;
           }

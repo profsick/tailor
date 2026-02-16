@@ -218,8 +218,8 @@ nav img {
   font-size: 3rem;
   text-align: center;
   padding-top: 20px;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  padding-bottom: 3rem;
 }
 
 h2 {
@@ -234,6 +234,7 @@ h2 {
   gap: 4rem;
   align-items: center;
   justify-content: space-evenly;
+  flex-wrap: wrap;
 }
 
 .types::before,
@@ -292,6 +293,14 @@ h2 {
 .clothing-img {
   transition: all 0.3s ease;
   transform-origin: center;
+}
+
+.clothing-name {
+  font-size: 1.6rem;
+  color: #ffffff;
+  font-weight: 500;
+  margin-top: 0.8rem;
+  text-transform: capitalize;
 }
 
 .type:hover {
