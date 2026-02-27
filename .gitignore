@@ -31,3 +31,7 @@ npm-debug.log*
 node_modules/
 package-lock.json
 yarn.lock
+
+# Text explanations
+FUNCTION_REFERENCE_GUIDE.md
+RUN_CHECKLIST.md
