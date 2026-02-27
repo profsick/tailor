@@ -1,10 +1,33 @@
 // =====================================================
-// SUPABASE CONFIGURATION
+// API CONFIGURATION
 // =====================================================
 
-const SUPABASE_URL = "https://ptukwjetdzqamcadzizt.supabase.co";
-const SUPABASE_KEY = "sb_publishable__I-AYgmaXTBvliWFnVGQ3A_000bNXie";
-const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const API_BASE = window.TAILOR_API_BASE || "http://localhost:3000/api";
+
+async function apiRequest(path, options = {}) {
+  const response = await fetch(`${API_BASE}${path}`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+    ...options,
+  });
+
+  let payload = null;
+  try {
+    payload = await response.json();
+  } catch (error) {
+    payload = null;
+  }
+
+  if (!response.ok) {
+    const message =
+      payload?.message || `Request failed with status ${response.status}`;
+    throw new Error(message);
+  }
+
+  return payload;
+}
 
 // =====================================================
 // PRICING CONFIGURATION
@@ -130,10 +153,8 @@ class Cart {
 const cart = new Cart();
 
 // =====================================================
-// SUPABASE SUBMISSION (replaced Google Sheets)
+// ORDER SUBMISSION
 // =====================================================
-
-// Using Supabase for order storage - see SUPABASE_URL and SUPABASE_KEY at top
 
 function getCartItems() {
   try {
@@ -181,44 +202,32 @@ async function submitOrderToSheet(orderData) {
   }
 
   try {
-    console.log("📤 Submitting order to Supabase:", orderData);
+    console.log("📤 Submitting order to API:", orderData);
 
     // Get items for proper data structure
     const items = getCartItems();
 
-    // Insert order into Supabase
-    const { data, error } = await sbClient
-      .from("orders")
-      .insert([
-        {
-          name: orderData.name,
-          email: orderData.email,
-          phone: orderData.phone,
-          clothing:
-            items?.map((item) => item.clothing.name).join(", ") || "N/A",
-          fabric: items?.map((item) => item.fabric.name).join(", ") || "N/A",
-          measurements: orderData.measurements || {},
-          instructions: orderData.instructions || "",
-          total: orderData.total || 0,
-          status: "Pending",
-        },
-      ])
-      .select("id,status,created_at")
-      .single();
-
-    if (error) {
-      console.error("❌ Supabase error:", error);
-      throw new Error(error.message);
-    }
+    const data = await apiRequest("/orders", {
+      method: "POST",
+      body: JSON.stringify({
+        name: orderData.name,
+        email: orderData.email,
+        phone: orderData.phone,
+        items: items,
+        measurements: orderData.measurements || {},
+        instructions: orderData.instructions || "",
+        total: orderData.total || 0,
+      }),
+    });
 
     const persistedOrder = {
       ...orderData,
-      supabaseId: data?.id || null,
+      remoteOrderId: data?.id || null,
       status: data?.status || orderData.status || "Pending",
       timestamp: orderData.timestamp || Date.now(),
     };
 
-    console.log("✅ Order saved to Supabase:", data);
+    console.log("✅ Order saved to API:", data);
     localStorage.setItem("lastOrder", JSON.stringify(persistedOrder));
     saveOrderToHistory(persistedOrder);
     updateOrdersNavLinks();
@@ -250,6 +259,8 @@ async function submitOrderToSheet(orderData) {
       // Clear the cart after successful order
       cart.clearCart();
     }, 1500);
+
+    return { success: true, order: persistedOrder };
   } catch (error) {
     console.error("❌ Order submission error:", error);
     showNotification("❌ Failed to submit order: " + error.message);
@@ -259,6 +270,8 @@ async function submitOrderToSheet(orderData) {
       submitBtn.classList.remove("loading");
       submitBtn.textContent = "Place Order";
     }
+
+    return { success: false, error: error.message };
   }
 }
 
@@ -335,7 +348,7 @@ function saveOrderToHistory(orderData) {
     instructions: orderData.instructions || orderData.specialRequest || "",
     total: total,
     status: orderData.status || "Pending",
-    supabaseId: orderData.supabaseId || null,
+    remoteOrderId: orderData.remoteOrderId || null,
     items: items.map((item) => ({
       clothing: item.clothing?.name || "Item",
       fabric: item.fabric?.name || "Fabric",
@@ -373,28 +386,28 @@ function clearOrderHistory() {
   showNotification("✅ Order history cleared!");
 }
 
-async function syncOrderStatusesFromSupabase(orders) {
-  const supabaseIds = orders
-    .map((order) => order.supabaseId)
+async function syncOrderStatusesFromApi(orders) {
+  const remoteOrderIds = orders
+    .map((order) => order.remoteOrderId)
     .filter((id) => typeof id === "string" && id.length > 0);
 
-  if (supabaseIds.length === 0) return orders;
+  if (remoteOrderIds.length === 0) return orders;
 
   try {
-    const { data, error } = await sbClient
-      .from("orders")
-      .select("id,status")
-      .in("id", supabaseIds);
+    const data = await apiRequest(
+      `/orders/statuses?ids=${encodeURIComponent(remoteOrderIds.join(","))}`,
+    );
 
-    if (error || !data) return orders;
+    if (!Array.isArray(data)) return orders;
 
     const statusMap = new Map(
       data.map((row) => [row.id, row.status || "Pending"]),
     );
 
     const updated = orders.map((order) => {
-      if (!order.supabaseId) return order;
-      const status = statusMap.get(order.supabaseId);
+      const remoteOrderId = order.remoteOrderId;
+      if (!remoteOrderId) return order;
+      const status = statusMap.get(remoteOrderId);
       if (!status) return order;
       return { ...order, status };
     });
@@ -413,7 +426,7 @@ async function initOrdersPage() {
   if (!ordersList) return;
 
   let orders = getValidOrderHistory();
-  orders = await syncOrderStatusesFromSupabase(orders);
+  orders = await syncOrderStatusesFromApi(orders);
   if (!orders || orders.length === 0) {
     setHidden(ordersList, true);
     setHidden(emptyMessage, false);
@@ -565,7 +578,7 @@ function initOrderPage() {
     });
   }
 
-  orderForm.addEventListener("submit", function (e) {
+  orderForm.addEventListener("submit", async function (e) {
     e.preventDefault();
 
     // Validate measurements exist
@@ -607,28 +620,31 @@ function initOrderPage() {
       email: this.email.value,
       phone: this.phone.value,
     });
-    submitOrderToSheet(orderData);
+    const result = await submitOrderToSheet(orderData);
 
-    setTimeout(() => {
-      if (window.cart && typeof cart.clearCart === "function") {
-        cart.clearCart();
-      }
-      localStorage.removeItem("tailorCart");
-      if (window.cart && typeof cart.updateCartUI === "function") {
-        cart.updateCartUI();
-      }
-      if (summaryDiv) {
-        summaryDiv.innerHTML =
-          '<p class="empty-cart-text">No items in cart</p>';
-      }
-      const confirmation = document.getElementById("orderConfirmation");
-      if (confirmation) {
-        setHidden(confirmation, false);
-      }
-      setHidden(orderForm, true);
+    if (!result?.success) {
       submitBtn.disabled = false;
       submitBtn.textContent = "Place Order";
-    }, 2000);
+      return;
+    }
+
+    if (window.cart && typeof cart.clearCart === "function") {
+      cart.clearCart();
+    }
+    localStorage.removeItem("tailorCart");
+    if (window.cart && typeof cart.updateCartUI === "function") {
+      cart.updateCartUI();
+    }
+    if (summaryDiv) {
+      summaryDiv.innerHTML = '<p class="empty-cart-text">No items in cart</p>';
+    }
+    const confirmation = document.getElementById("orderConfirmation");
+    if (confirmation) {
+      setHidden(confirmation, false);
+    }
+    setHidden(orderForm, true);
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Place Order";
   });
 }
 

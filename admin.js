@@ -1,6 +1,5 @@
-const SUPABASE_URL = "https://ptukwjetdzqamcadzizt.supabase.co";
-const SUPABASE_KEY = "sb_publishable__I-AYgmaXTBvliWFnVGQ3A_000bNXie";
-let adminSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const API_BASE = window.TAILOR_API_BASE || "http://localhost:3000/api";
+
 // Login credentials
 const ADMIN_USERNAME = "em aay";
 const ADMIN_PASSWORD = "alhamdulillah";
@@ -13,13 +12,36 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 });
 
+async function apiRequest(path, options = {}) {
+  const response = await fetch(`${API_BASE}${path}`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+    ...options,
+  });
+
+  let payload = null;
+  try {
+    payload = await response.json();
+  } catch (error) {
+    payload = null;
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      payload?.message || `Request failed with status ${response.status}`,
+    );
+  }
+
+  return payload;
+}
 function handleLogin(event) {
   event.preventDefault();
   const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value.trim();
   const errorDiv = document.getElementById("loginError");
 
-  // Clear previous error
   errorDiv.classList.add("is-hidden");
 
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
@@ -45,14 +67,9 @@ async function loadOrders() {
   try {
     content.innerHTML = '<div class="loading">Loading orders...</div>';
 
-    const { data, error } = await adminSupabase
-      .from("orders")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const data = await apiRequest("/orders");
 
-    if (error) throw error;
-
-    if (!data || data.length === 0) {
+    if (!Array.isArray(data) || data.length === 0) {
       content.innerHTML =
         '<div class="error">📭 No orders found yet. Orders will appear here when customers place them.</div>';
       orderCount.textContent = "0";
@@ -88,7 +105,6 @@ async function loadOrders() {
         minute: "2-digit",
       });
 
-      // Format measurements for display
       let measurements = "No measurements";
       if (order.measurements && typeof order.measurements === "object") {
         const measurementLabels = {
@@ -122,8 +138,6 @@ async function loadOrders() {
 
       const statusLabel = order.status || "Pending";
       const isCompleted = statusLabel.toLowerCase() === "completed";
-
-      // Format instructions
       const instructions = order.instructions || "";
       const instructionsPreview =
         instructions.length > 30
@@ -194,12 +208,7 @@ async function deleteAllOrders() {
   try {
     content.innerHTML = '<div class="loading">Deleting all orders...</div>';
 
-    const { error } = await adminSupabase
-      .from("orders")
-      .delete()
-      .neq("id", "00000000-0000-0000-0000-000000000000"); // Delete all rows
-
-    if (error) throw error;
+    await apiRequest("/orders", { method: "DELETE" });
 
     content.innerHTML =
       '<div class="success">✅ All orders deleted successfully!</div>';
@@ -207,7 +216,7 @@ async function deleteAllOrders() {
 
     setTimeout(() => {
       loadOrders();
-    }, 1500);
+    }, 1200);
   } catch (error) {
     content.innerHTML = `<div class="error">❌ Error deleting orders: ${error.message}</div>`;
   }
@@ -219,17 +228,12 @@ async function deleteOrder(orderId) {
   }
 
   try {
-    const { error } = await adminSupabase
-      .from("orders")
-      .delete()
-      .eq("id", orderId);
-
-    if (error) throw error;
+    await apiRequest(`/orders/${orderId}`, { method: "DELETE" });
 
     showAdminMessage("✅ Order deleted successfully!", "success");
     setTimeout(() => {
       loadOrders();
-    }, 1000);
+    }, 800);
   } catch (error) {
     showAdminMessage(`❌ Error deleting order: ${error.message}`, "error");
   }
@@ -237,17 +241,15 @@ async function deleteOrder(orderId) {
 
 async function markOrderCompleted(orderId) {
   try {
-    const { error } = await adminSupabase
-      .from("orders")
-      .update({ status: "Completed" })
-      .eq("id", orderId);
-
-    if (error) throw error;
+    await apiRequest(`/orders/${orderId}/complete`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "Completed" }),
+    });
 
     showAdminMessage("✅ Order marked as completed!", "success");
     setTimeout(() => {
       loadOrders();
-    }, 800);
+    }, 700);
   } catch (error) {
     showAdminMessage(`❌ Error updating order: ${error.message}`, "error");
   }
@@ -270,31 +272,19 @@ function showAdminMessage(message, type) {
   }, 3000);
 }
 
-// Load orders on page load - now handled in showDashboard() after login
-// loadOrders();
-
-// Test connection to Supabase
 async function testConnection() {
   const content = document.getElementById("content");
   try {
     content.innerHTML =
-      '<div class="loading">Testing Supabase connection...</div>';
+      '<div class="loading">Testing backend connection...</div>';
 
-    const { data, error } = await adminSupabase
-      .from("orders")
-      .select("id")
-      .limit(1);
-
-    if (error) {
-      content.innerHTML = `<div class="error">❌ Connection Failed: ${error.message}</div>`;
-      return;
-    }
+    await apiRequest("/health");
 
     content.innerHTML =
-      '<div class="success">✅ Supabase connection successful! Database is working.</div>';
+      '<div class="success">✅ Backend connection successful! API is working.</div>';
     setTimeout(() => {
       loadOrders();
-    }, 2000);
+    }, 1500);
   } catch (error) {
     content.innerHTML = `<div class="error">❌ Connection Error: ${error.message}</div>`;
   }
