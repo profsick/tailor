@@ -24,7 +24,7 @@ body {
   font-family: "Inter", sans-serif;
   background: var(--bg);
   color: var(--text);
-  padding: 24px;
+  padding: clamp(10px, 2vw, 24px);
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
@@ -45,10 +45,10 @@ body::before {
 }
 
 .admin-container {
-  max-width: 1400px;
+  max-width: min(1400px, 100%);
   margin: 0 auto;
   background: var(--panel);
-  padding: 32px;
+  padding: clamp(14px, 2.2vw, 32px);
   border-radius: 18px;
   border: 1px solid var(--panel-border);
   box-shadow: var(--shadow);
@@ -60,7 +60,7 @@ body::before {
 h1 {
   margin-bottom: 6px;
   color: #ffffff;
-  font-size: 2.6rem;
+  font-size: clamp(1.5rem, 2.4vw, 2.6rem);
   font-family: "EB Garamond", serif;
   letter-spacing: 1px;
 }
@@ -68,7 +68,7 @@ h1 {
 .header-info {
   color: var(--muted);
   margin-bottom: 26px;
-  font-size: 1.4rem;
+  font-size: clamp(0.95rem, 1.2vw, 1.4rem);
 }
 
 .btn-group {
@@ -85,7 +85,7 @@ button {
   border: 1px solid rgba(102, 126, 234, 0.35);
   border-radius: 999px;
   cursor: pointer;
-  font-size: 1.35rem;
+  font-size: clamp(0.9rem, 1.1vw, 1.35rem);
   transition: all 0.25s ease;
   letter-spacing: 0.3px;
 }
@@ -124,14 +124,14 @@ th {
   padding: 16px;
   text-align: left;
   font-weight: 600;
-  font-size: 1.3rem;
+  font-size: clamp(0.9rem, 1.05vw, 1.3rem);
   letter-spacing: 0.4px;
 }
 
 td {
   padding: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
-  font-size: 1.3rem;
+  font-size: clamp(0.88rem, 1.02vw, 1.3rem);
   color: #d6d8e2;
 }
 
@@ -143,10 +143,10 @@ tr:hover {
   background: rgba(255, 255, 255, 0.04);
   padding: 10px;
   border-radius: 10px;
-  max-width: 300px;
+  max-width: min(300px, 38vw);
   max-height: 200px;
   overflow-y: auto;
-  font-size: 1.2rem;
+  font-size: clamp(0.82rem, 0.95vw, 1.2rem);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -154,8 +154,8 @@ tr:hover {
   background: rgba(255, 255, 255, 0.04);
   padding: 10px;
   border-radius: 10px;
-  max-width: 300px;
-  font-size: 1.2rem;
+  max-width: min(300px, 38vw);
+  font-size: clamp(0.82rem, 0.95vw, 1.2rem);
   border: 1px solid rgba(255, 255, 255, 0.06);
   position: relative;
 }
@@ -205,7 +205,7 @@ tr:hover {
 .price {
   font-weight: 600;
   color: var(--success);
-  font-size: 1.5rem;
+  font-size: clamp(1rem, 1.2vw, 1.5rem);
 }
 
 .loading {
@@ -238,7 +238,7 @@ tr:hover {
 .order-count {
   color: #dfe6ff;
   font-weight: 600;
-  font-size: 1.5rem;
+  font-size: clamp(1rem, 1.2vw, 1.5rem);
 }
 
 .delete-btn {
@@ -267,6 +267,7 @@ tr:hover {
   font-size: 1.2rem;
   transition: all 0.25s ease;
   margin-right: 6px;
+  margin-bottom: 6px;
 }
 
 .complete-btn:hover {
@@ -444,42 +445,80 @@ tr:hover {
     width: 100%;
   }
 
-  table {
-    font-size: 1rem;
+  table,
+  thead,
+  tbody,
+  th,
+  td,
+  tr {
     display: block;
-    overflow-x: auto;
-    white-space: nowrap;
+    width: 100%;
   }
 
-  th {
-    padding: 12px 8px;
-    font-size: 1.1rem;
+  thead {
+    display: none;
+  }
+
+  table {
+    border: none;
+    background: transparent;
+    margin-top: 14px;
+  }
+
+  tr {
+    background: var(--bg-soft);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    margin-bottom: 14px;
+    padding: 10px;
   }
 
   td {
-    padding: 12px 8px;
+    position: relative;
+    border-top: none;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+    padding: 10px 8px 10px 42%;
     font-size: 1rem;
+    min-height: 36px;
+    white-space: normal;
+    word-break: break-word;
   }
 
-  .measurements-cell {
-    max-width: 150px;
-    font-size: 1rem;
+  td:last-child {
+    border-bottom: none;
   }
 
+  td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 8px;
+    top: 10px;
+    width: 36%;
+    color: var(--muted);
+    font-size: 0.92rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+  }
+
+  .measurements-cell,
   .instructions-cell {
-    max-width: 150px;
-    font-size: 1rem;
+    max-width: 100%;
+    font-size: 0.95rem;
   }
 
-  .delete-btn {
-    padding: 6px 10px;
-    font-size: 1rem;
-    white-space: nowrap;
+  .action-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
   }
 
-  .complete-btn {
-    padding: 6px 10px;
-    font-size: 1rem;
+  td .complete-btn,
+  td .delete-btn {
+    width: auto;
+    flex: 1 1 140px;
+    margin-right: 0;
+    padding: 8px 10px;
+    font-size: 0.98rem;
     white-space: nowrap;
   }
 }
@@ -517,15 +556,20 @@ tr:hover {
     font-size: 1.1rem;
   }
 
-  th,
   td {
-    padding: 8px 6px;
-    font-size: 0.9rem;
+    padding: 9px 6px 9px 44%;
+    font-size: 0.92rem;
+  }
+
+  td::before {
+    width: 38%;
+    left: 6px;
+    top: 9px;
+    font-size: 0.84rem;
   }
 
   .measurements-cell {
-    max-width: 100px;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
   }
 
   .delete-btn,

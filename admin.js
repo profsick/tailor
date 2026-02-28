@@ -1,4 +1,4 @@
-const API_BASE = window.TAILOR_API_BASE || "http://localhost:3000/api";
+const API_BASE = window.TAILOR_API_BASE || `${window.location.origin}/api`;
 
 // Login credentials
 const ADMIN_USERNAME = "em aay";
@@ -147,15 +147,15 @@ async function loadOrders() {
 
       html += `
             <tr>
-              <td>${date}</td>
-              <td><strong>${order.name || "N/A"}</strong></td>
-              <td>${order.phone || "N/A"}</td>
-              <td>
+              <td data-label="Date">${date}</td>
+              <td data-label="Name"><strong>${order.name || "N/A"}</strong></td>
+              <td data-label="Phone">${order.phone || "N/A"}</td>
+              <td data-label="Order">
                 <strong>${order.clothing || "N/A"}</strong><br>
                 <span style="color: #666; font-size: 1.2rem;">Fabric: ${order.fabric || "N/A"}</span>
               </td>
-              <td><div class="measurements-cell">${measurements}</div></td>
-              <td>
+              <td data-label="Measurements"><div class="measurements-cell">${measurements}</div></td>
+              <td data-label="Instructions">
                 <div class="instructions-cell">
                   <div class="instructions-preview">${instructionsPreview}</div>
                   ${
@@ -172,15 +172,17 @@ async function loadOrders() {
                   }
                 </div>
               </td>
-              <td class="price">₹${order.total || 0}</td>
-              <td>
+              <td data-label="Total" class="price">₹${order.total || 0}</td>
+              <td data-label="Status">
                 <span class="status-badge ${isCompleted ? "completed" : "pending"}">${statusLabel}</span>
               </td>
-              <td>
-                <button class="complete-btn" onclick="markOrderCompleted('${order.id}')" ${isCompleted ? "disabled" : ""}>
-                  ${isCompleted ? "✅ Completed" : "✅Completed"}
-                </button>
-                <button class="delete-btn" onclick="deleteOrder('${order.id}')">🗑️ Delete</button>
+              <td data-label="Actions">
+                <div class="action-buttons">
+                  <button class="complete-btn" onclick="markOrderCompleted('${order.id}')" ${isCompleted ? "disabled" : ""}>
+                    ${isCompleted ? "✅ Completed" : "✅Completed"}
+                  </button>
+                  <button class="delete-btn" onclick="deleteOrder('${order.id}')">🗑️ Delete</button>
+                </div>
               </td>
             </tr>
           `;

@@ -2,7 +2,7 @@
 // API CONFIGURATION
 // =====================================================
 
-const API_BASE = window.TAILOR_API_BASE || "http://localhost:3000/api";
+const API_BASE = window.TAILOR_API_BASE || `${window.location.origin}/api`;
 
 async function apiRequest(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
@@ -1228,7 +1228,16 @@ document.addEventListener("DOMContentLoaded", function () {
         const classes = img.className.split(" ");
         let clothingName = "Garment";
         for (let cls of classes) {
-          if (["tuxedo", "trousers", "suit", "shirt", "sherwani", "thobe"].includes(cls)) {
+          if (
+            [
+              "tuxedo",
+              "trousers",
+              "suit",
+              "shirt",
+              "sherwani",
+              "thobe",
+            ].includes(cls)
+          ) {
             clothingName = cls.charAt(0).toUpperCase() + cls.slice(1);
             break;
           }
