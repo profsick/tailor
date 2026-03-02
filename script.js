@@ -1,152 +1,262 @@
 // =====================================================
-// API CONFIGURATION
+// API CONFIGURATION - How we connect to the backend
 // =====================================================
 
+// Set the base URL for all API requests
+// If window.TAILOR_API_BASE exists, use it, otherwise use current domain + "/api"
+// Example: http://localhost:3000/api
 const API_BASE = window.TAILOR_API_BASE || `${window.location.origin}/api`;
 
+/**
+ * apiRequest - Helper function to make HTTP requests to our backend
+ * @param {string} path - The API endpoint (e.g., "/orders", "/orders/123")
+ * @param {object} options - Additional fetch options (method, body, headers, etc.)
+ * @returns {Promise} - The parsed JSON response from the server
+ */
 async function apiRequest(path, options = {}) {
+  // Construct the full URL by combining API_BASE with the endpoint path
   const response = await fetch(`${API_BASE}${path}`, {
+    // Set default headers for our request
     headers: {
+      // Tell the server we're sending JSON data
       "Content-Type": "application/json",
+      // Spread any additional headers from the options object
       ...(options.headers || {}),
     },
+    // Spread all other options like method: "POST", body: data, etc.
     ...options,
   });
 
+  // Initialize payload as null to handle non-JSON responses
   let payload = null;
   try {
+    // Try to parse the response as JSON
     payload = await response.json();
   } catch (error) {
+    // If the response isn't valid JSON, leave payload as null
     payload = null;
   }
 
+  // Check if the HTTP request was successful (status 200-299)
   if (!response.ok) {
+    // Create an error message - use the server's message if available, otherwise use status code
     const message =
       payload?.message || `Request failed with status ${response.status}`;
+    // Throw an error so the caller can catch it
     throw new Error(message);
   }
 
+  // Return the successfully parsed JSON data
   return payload;
 }
 
 // =====================================================
-// PRICING CONFIGURATION
+// PRICING CONFIGURATION - Cost of each clothing item
 // =====================================================
 
+// This object stores the price for each piece of clothing (in rupees, likely)
 const PRICING = {
-  shirt: 1000,
-  trousers: 800,
-  pant: 800,
-  suit: 6000,
-  tuxedo: 8000,
-  sherwani: 10000,
-  thobe: 5000,
+  shirt: 1000,      // A shirt costs ₹1000
+  trousers: 800,    // Trousers cost ₹800
+  pant: 800,        // Pant is another word for trousers, also ₹800
+  suit: 6000,       // A full suit costs ₹6000
+  tuxedo: 8000,     // A tuxedo costs ₹8000 (fancier)
+  sherwani: 10000,  // Traditional sherwani costs ₹10000
+  thobe: 5000,      // A thobe costs ₹5000
 };
 
 // =====================================================
-// CART MANAGEMENT - LocalStorage
+// CART MANAGEMENT - Stores items customer wants to buy
 // =====================================================
 
+/**
+ * Cart Class - Manages all shopping cart operations
+ * Stores items in browser's localStorage so they persist even after page refresh
+ */
 class Cart {
+  /**
+   * constructor - Initialize cart when the page loads
+   */
   constructor() {
+    // Load previously saved items from browser storage
     this.items = this.loadFromLocalStorage();
+    // Load previously saved measurements from browser storage
     this.measurements = this.loadMeasurementsFromLocalStorage();
   }
 
+  /**
+   * loadFromLocalStorage - Retrieve cart items from browser's localStorage
+   * @returns {Array} - Array of items in cart, or empty array if none exist
+   */
   loadFromLocalStorage() {
+    // Get the saved cart data from localStorage
     const saved = localStorage.getItem("tailorCart");
+    // If data exists, parse it from JSON string to object; otherwise return empty array
     return saved ? JSON.parse(saved) : [];
   }
 
+  /**
+   * loadMeasurementsFromLocalStorage - Retrieve saved measurements from storage
+   * @returns {Object} - The measurements object, or null if none saved
+   */
   loadMeasurementsFromLocalStorage() {
+    // Get the saved measurements data
     const saved = localStorage.getItem("tailorMeasurements");
+    // If data exists, parse it; otherwise return null
     return saved ? JSON.parse(saved) : null;
   }
 
+  /**
+   * saveMeasurements - Save customer's body measurements
+   * @param {Object} measurementData - Object containing all measurement values
+   */
   saveMeasurements(measurementData) {
+    // Store measurements in memory
     this.measurements = measurementData;
+    // Save measurements to localStorage so they persist
     localStorage.setItem("tailorMeasurements", JSON.stringify(measurementData));
+    // Update the cart display to reflect changes
     this.saveToLocalStorage();
   }
 
+  /**
+   * saveToLocalStorage - Save current cart items to localStorage
+   */
   saveToLocalStorage() {
+    // Convert cart items array to JSON string and save it
     localStorage.setItem("tailorCart", JSON.stringify(this.items));
   }
 
+  /**
+   * addItem - Add a new clothing item to the cart
+   * @param {Object} clothing - The clothing object with name and other info
+   * @param {Object} fabric - The fabric object with name and other info
+   * @returns {Object} - The newly created item object
+   */
   addItem(clothing, fabric) {
+    // Get the clothing type name and convert to lowercase for PRICING lookup
     const clothingKey = clothing.name.toLowerCase();
+    // Look up the price for this clothing type, default to 0 if not found
     const price = PRICING[clothingKey] || 0;
 
+    // Create a new item object with all details
     const item = {
-      id: Date.now(),
-      clothing: clothing,
-      fabric: fabric,
-      quantity: 1,
-      price: price,
+      id: Date.now(),           // Use current timestamp as unique ID
+      clothing: clothing,       // Store the full clothing object
+      fabric: fabric,           // Store the full fabric object
+      quantity: 1,              // Start with quantity of 1
+      price: price,             // Store the price
     };
+    // Add this item to the cart's items array
     this.items.push(item);
+    // Save the updated cart to localStorage
     this.saveToLocalStorage();
+    // Update the cart icon and display
     this.updateCartUI();
+    // Return the new item so caller can use it
     return item;
   }
 
+  /**
+   * removeItem - Delete an item from the cart
+   * @param {number} itemId - The ID of the item to remove
+   */
   removeItem(itemId) {
+    // Filter items array to remove the item with matching ID
     this.items = this.items.filter((item) => item.id !== itemId);
+    // Save the updated cart
     this.saveToLocalStorage();
+    // Update the display
     this.updateCartUI();
   }
 
+  /**
+   * updateQuantity - Change how many of an item the customer wants
+   * @param {number} itemId - The ID of the item to update
+   * @param {number} quantity - The new quantity
+   */
   updateQuantity(itemId, quantity) {
+    // Find the item in the cart by ID
     const item = this.items.find((i) => i.id === itemId);
+    // If item found
     if (item) {
+      // Update quantity to the new value, but make sure it's at least 1
       item.quantity = Math.max(1, quantity);
+      // Save the change
       this.saveToLocalStorage();
+      // Update the display
       this.updateCartUI();
     }
   }
 
+  /**
+   * getItemCount - Calculate total number of items in cart
+   * @returns {number} - Total quantity of all items (sum of all quantities)
+   */
   getItemCount() {
+    // Loop through all items and add up their quantities
     return this.items.reduce((sum, item) => sum + item.quantity, 0);
   }
 
+  /**
+   * updateCartUI - Update the cart icon and badge on the page
+   */
   updateCartUI() {
+    // Get the cart count badge element (the number shown on the cart icon)
     const cartCount = document.getElementById("cartCount");
+    // Get the cart icon element
     const cartIcon = document.getElementById("cartIcon");
+    // Calculate how many items are in the cart
     const itemCount = this.getItemCount();
 
+    // Update the badge number
     if (cartCount) {
       cartCount.textContent = itemCount;
     }
 
-    // Show cart icon only when there are items
+    // Show or hide the cart icon based on whether there are items
     if (cartIcon) {
       if (itemCount > 0) {
+        // Items in cart - show the icon
         cartIcon.classList.add("show");
-        // Set initial state based on scroll position
-        const scrollY = window.scrollY;
+        // Determine if cart is "floating" (follows scrolling) or "docked"
+        const scrollY = window.scrollY;  // How far down the page user has scrolled
         const nav = document.querySelector("nav");
         const navHeight = nav ? nav.offsetHeight : 100;
 
+        // If user has scrolled past the nav, make icon float with them
         if (scrollY > navHeight) {
           cartIcon.classList.add("floating");
           cartIcon.classList.remove("docked");
         } else {
+          // Otherwise keep it docked at the top
           cartIcon.classList.add("docked");
           cartIcon.classList.remove("floating");
         }
       } else {
+        // No items in cart - hide the icon completely
         cartIcon.classList.remove("show", "floating", "docked");
       }
     }
   }
 
+  /**
+   * getItems - Get all items currently in the cart
+   * @returns {Array} - Array of cart items
+   */
   getItems() {
     return this.items;
   }
 
+  /**
+   * clearCart - Remove all items from the cart
+   */
   clearCart() {
+    // Empty the items array
     this.items = [];
+    // Save the empty state
     this.saveToLocalStorage();
+    // Update the display
     this.updateCartUI();
   }
 }
