@@ -1,15 +1,16 @@
-// Initialize items from localStorage on page load
+// Bootstraps the add-items page with saved catalog data and file-input previews.
 window.addEventListener('DOMContentLoaded', () => {
   loadExistingClothing();
   loadExistingFabrics();
   setupFileInputs();
 });
 
+// Bumps a version key so other open tabs know the catalog changed.
 function notifyItemsUpdated() {
   localStorage.setItem('tailorItemsVersion', String(Date.now()));
 }
 
-// Setup file input change handlers
+// Wires file inputs so admins get an immediate preview before uploading.
 function setupFileInputs() {
   document.getElementById('clothingImage').addEventListener('change', (e) => {
     const file = e.target.files[0];
@@ -40,7 +41,7 @@ function setupFileInputs() {
   });
 }
 
-// Load existing clothing items
+// Renders the current clothing catalog cards in the admin panel.
 function loadExistingClothing() {
   const clothing = getClothingFromStorage();
   const container = document.getElementById('clothingItems');
@@ -63,7 +64,7 @@ function loadExistingClothing() {
   `).join('');
 }
 
-// Load existing fabric items
+// Renders the current fabric catalog cards in the admin panel.
 function loadExistingFabrics() {
   const fabrics = getFabricsFromStorage();
   const container = document.getElementById('fabricItems');
@@ -86,7 +87,7 @@ function loadExistingFabrics() {
   `).join('');
 }
 
-// Get clothing from localStorage
+// Reads clothing data from localStorage, falling back to built-in defaults.
 function getClothingFromStorage() {
   try {
     const defaultClothing = [
@@ -112,7 +113,7 @@ function getClothingFromStorage() {
   }
 }
 
-// Get fabrics from localStorage
+// Reads fabric data from localStorage, falling back to built-in defaults.
 function getFabricsFromStorage() {
   try {
     const defaultFabrics = [
@@ -137,7 +138,7 @@ function getFabricsFromStorage() {
   }
 }
 
-// Upload new clothing item
+// Validates and saves a newly uploaded clothing item into browser storage.
 function uploadClothing() {
   const name = document.getElementById('clothingName').value.trim();
   const imageFile = document.getElementById('clothingImage').files[0];
@@ -154,7 +155,7 @@ function uploadClothing() {
     return;
   }
 
-  // Convert image to base64
+  // Convert the chosen image to base64 so it can be stored in localStorage.
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
@@ -188,7 +189,7 @@ function uploadClothing() {
   reader.readAsDataURL(imageFile);
 }
 
-// Upload new fabric item
+// Validates and saves a newly uploaded fabric item into browser storage.
 function uploadFabric() {
   const name = document.getElementById('fabricName').value.trim();
   const imageFile = document.getElementById('fabricImage').files[0];
@@ -199,7 +200,7 @@ function uploadFabric() {
     return;
   }
 
-  // Convert image to base64
+  // Convert the chosen image to base64 so it can be stored in localStorage.
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
@@ -230,7 +231,7 @@ function uploadFabric() {
   reader.readAsDataURL(imageFile);
 }
 
-// Delete clothing item
+// Removes one clothing item from the saved catalog after confirmation.
 function deleteClothing(index) {
   if (confirm('Are you sure you want to delete this clothing item?')) {
     const clothing = getClothingFromStorage();
@@ -242,7 +243,7 @@ function deleteClothing(index) {
   }
 }
 
-// Delete fabric item
+// Removes one fabric item from the saved catalog after confirmation.
 function deleteFabric(index) {
   if (confirm('Are you sure you want to delete this fabric item?')) {
     const fabrics = getFabricsFromStorage();
@@ -254,7 +255,7 @@ function deleteFabric(index) {
   }
 }
 
-// Show message helper
+// Displays inline success/error feedback under the relevant upload form.
 function showMessage(element, message, type) {
   element.textContent = message;
   element.className = 'message ' + type;

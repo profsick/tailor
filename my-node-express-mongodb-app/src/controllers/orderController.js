@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Order = require("../models/Order");
 
+// Converts incoming cart item payloads into one consistent backend-friendly shape.
 function normalizeItems(items = []) {
   if (!Array.isArray(items)) return [];
 
@@ -12,6 +13,7 @@ function normalizeItems(items = []) {
   }));
 }
 
+// Creates a new order document after validating the required customer fields.
 exports.createOrder = async (req, res) => {
   try {
     const { name, email, phone, instructions, measurements, items, total } =
@@ -21,7 +23,9 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ message: "name and phone are required" });
     }
 
+    // Normalize the incoming items so the API accepts both old and new frontend shapes.
     const normalizedItems = normalizeItems(items);
+    // Fall back to a computed total if the frontend did not send a valid one.
     const fallbackTotal = normalizedItems.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0,
@@ -53,6 +57,7 @@ exports.createOrder = async (req, res) => {
   }
 };
 
+// Returns all orders in reverse-chronological order for the admin dashboard.
 exports.listOrders = async (_req, res) => {
   try {
     const orders = await Order.find({}).sort({ createdAt: -1 });
@@ -79,12 +84,14 @@ exports.listOrders = async (_req, res) => {
   }
 };
 
+// Returns only id/status pairs for selected orders used by the customer orders page.
 exports.getOrderStatuses = async (req, res) => {
   try {
     const rawIds = String(req.query.ids || "")
       .split(",")
       .map((id) => id.trim())
       .filter(Boolean);
+    // Ignore invalid IDs instead of letting them break the whole request.
     const ids = rawIds.filter((id) => mongoose.Types.ObjectId.isValid(id));
 
     if (ids.length === 0) {
@@ -106,6 +113,7 @@ exports.getOrderStatuses = async (req, res) => {
   }
 };
 
+// Marks one order as completed after validating the MongoDB ObjectId.
 exports.markCompleted = async (req, res) => {
   try {
     const { id } = req.params;
@@ -132,6 +140,7 @@ exports.markCompleted = async (req, res) => {
   }
 };
 
+// Deletes a single order by id.
 exports.deleteOrder = async (req, res) => {
   try {
     const { id } = req.params;
@@ -154,6 +163,7 @@ exports.deleteOrder = async (req, res) => {
   }
 };
 
+// Deletes every order document; used by the admin bulk-delete action.
 exports.deleteAllOrders = async (_req, res) => {
   try {
     await Order.deleteMany({});

@@ -1,10 +1,10 @@
 const API_BASE = window.TAILOR_API_BASE || `${window.location.origin}/api`;
 
-// Login credentials
+// Hardcoded admin credentials used by the simple browser-side login gate.
 const ADMIN_USERNAME = "em aay";
 const ADMIN_PASSWORD = "alhamdulillah";
 
-// Check if already logged in
+// If the admin already logged in during this tab session, skip the login form.
 window.addEventListener("DOMContentLoaded", () => {
   const isLoggedIn = sessionStorage.getItem("adminLoggedIn");
   if (isLoggedIn === "true") {
@@ -12,6 +12,7 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 });
 
+// Shared helper for calling backend API endpoints and normalizing error handling.
 async function apiRequest(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
     headers: {
@@ -36,6 +37,8 @@ async function apiRequest(path, options = {}) {
 
   return payload;
 }
+
+// Validates the login form and unlocks the dashboard for the current tab session.
 function handleLogin(event) {
   event.preventDefault();
   const username = document.getElementById("username").value.trim();
@@ -54,12 +57,14 @@ function handleLogin(event) {
   }
 }
 
+// Swaps from the login screen to the orders dashboard and loads live data.
 function showDashboard() {
   document.getElementById("loginPage").classList.add("is-hidden");
   document.getElementById("dashboard").classList.remove("is-hidden");
   loadOrders();
 }
 
+// Fetches all orders from the backend and renders the full admin table.
 async function loadOrders() {
   const content = document.getElementById("content");
   const orderCount = document.getElementById("orderCount");
@@ -200,6 +205,7 @@ async function loadOrders() {
   }
 }
 
+// Deletes every order in the database after a destructive-action confirmation.
 async function deleteAllOrders() {
   if (!confirm("⚠️ Are you SURE? This will delete ALL orders permanently!")) {
     return;
@@ -224,6 +230,7 @@ async function deleteAllOrders() {
   }
 }
 
+// Deletes one specific order row and then refreshes the dashboard list.
 async function deleteOrder(orderId) {
   if (!confirm("⚠️ Are you sure you want to delete this order?")) {
     return;
@@ -241,6 +248,7 @@ async function deleteOrder(orderId) {
   }
 }
 
+// Marks one order as completed so customers/admin can see the status update.
 async function markOrderCompleted(orderId) {
   try {
     await apiRequest(`/orders/${orderId}/complete`, {
@@ -257,6 +265,7 @@ async function markOrderCompleted(orderId) {
   }
 }
 
+// Shows a temporary message banner above the table content area.
 function showAdminMessage(message, type) {
   const content = document.getElementById("content");
   const messageDiv = document.createElement("div");
@@ -274,6 +283,7 @@ function showAdminMessage(message, type) {
   }, 3000);
 }
 
+// Calls the lightweight health endpoint to verify the backend is reachable.
 async function testConnection() {
   const content = document.getElementById("content");
   try {
@@ -292,6 +302,7 @@ async function testConnection() {
   }
 }
 
+// Expands or collapses long instruction text inside an order row.
 function toggleInstructions(id) {
   const element = document.getElementById(id);
   const btn = element?.previousElementSibling;

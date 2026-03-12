@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 
+// Embedded schema for each item inside an order.
 const itemSchema = new mongoose.Schema(
   {
     clothing: {
@@ -26,6 +27,7 @@ const itemSchema = new mongoose.Schema(
   { _id: false },
 );
 
+// Main order schema storing customer details, measurements, items, totals, and status.
 const orderSchema = new mongoose.Schema(
   {
     name: {
@@ -83,4 +85,5 @@ const orderSchema = new mongoose.Schema(
   },
 );
 
+// Export the Order model used by the controllers for all CRUD operations.
 module.exports = mongoose.model("Order", orderSchema);

@@ -335,6 +335,7 @@ const cart = new Cart();
 // ORDER SUBMISSION
 // =====================================================
 
+// Safely reads cart items from storage, with fallback to the in-memory cart object.
 function getCartItems() {
   try {
     const raw = localStorage.getItem("tailorCart");
@@ -352,6 +353,7 @@ function getCartItems() {
   return [];
 }
 
+// Builds a normalized order object from form values and current cart state.
 function gatherOrderData(formValues) {
   const items = getCartItems();
   const total = items.reduce(
@@ -370,6 +372,7 @@ function gatherOrderData(formValues) {
   };
 }
 
+// Sends the finalized order to the backend API and updates local order history on success.
 async function submitOrderToSheet(orderData) {
   const submitBtn = document.querySelector(".submit-btn");
 
@@ -454,11 +457,13 @@ async function submitOrderToSheet(orderData) {
   }
 }
 
+// Small DOM helper for toggling the shared `is-hidden` utility class.
 function setHidden(element, hidden) {
   if (!element) return;
   element.classList.toggle("is-hidden", hidden);
 }
 
+// Loads the customer's locally saved order history array.
 function loadOrderHistory() {
   try {
     const stored = localStorage.getItem("orders");
@@ -469,6 +474,7 @@ function loadOrderHistory() {
   }
 }
 
+// Cleans older/local order records into a consistent shape before rendering.
 function getValidOrderHistory() {
   const orders = loadOrderHistory();
   const normalized = orders
@@ -510,6 +516,7 @@ function getValidOrderHistory() {
   return normalized;
 }
 
+// Stores one successful order in local history so the customer can revisit it later.
 function saveOrderToHistory(orderData) {
   const items = orderData.cartItems || orderData.items || [];
   const total = Number(orderData.total || 0);
@@ -541,6 +548,7 @@ function saveOrderToHistory(orderData) {
   return record;
 }
 
+// Shows or hides the "Your Orders" nav link based on whether local history exists.
 function updateOrdersNavLinks() {
   const links = document.querySelectorAll(".orders-link");
   if (!links || links.length === 0) return;
@@ -550,6 +558,7 @@ function updateOrdersNavLinks() {
   });
 }
 
+// Clears the customer's locally stored order history after confirmation.
 function clearOrderHistory() {
   if (
     !confirm(
@@ -565,6 +574,7 @@ function clearOrderHistory() {
   showNotification("✅ Order history cleared!");
 }
 
+// Refreshes statuses for known backend orders without re-fetching full order details.
 async function syncOrderStatusesFromApi(orders) {
   const remoteOrderIds = orders
     .map((order) => order.remoteOrderId)
@@ -598,6 +608,7 @@ async function syncOrderStatusesFromApi(orders) {
   }
 }
 
+// Initializes the customer orders page and renders the current local/remote order state.
 async function initOrdersPage() {
   const ordersList = document.getElementById("ordersList");
   const emptyMessage = document.getElementById("ordersEmpty");
@@ -675,6 +686,7 @@ async function initOrdersPage() {
   });
 }
 
+// Initializes the checkout page with customer details, cart summary, and measurements.
 function initOrderPage() {
   const orderForm = document.getElementById("orderForm");
   const summaryDiv = document.getElementById("summaryItems");
@@ -827,6 +839,7 @@ function initOrderPage() {
   });
 }
 
+// Reads previously saved customer contact details for autofill on checkout.
 function loadCustomerDetails() {
   try {
     const stored = localStorage.getItem("customerDetails");
@@ -836,6 +849,7 @@ function loadCustomerDetails() {
   }
 }
 
+// Saves customer contact details so repeat visits can prefill the form.
 function saveCustomerDetails(details) {
   if (!details) return;
   const payload = {
@@ -846,6 +860,7 @@ function saveCustomerDetails(details) {
   localStorage.setItem("customerDetails", JSON.stringify(payload));
 }
 
+// Initializes the cart page, including quantity controls and measurement editing.
 function initCartPage() {
   const cartItemsContainer = document.getElementById("cartItems");
   if (!cartItemsContainer) return;
@@ -1137,6 +1152,7 @@ function initCartPage() {
   setupCheckoutHandler();
 }
 
+// Shared checkout guard that redirects users when cart or measurements are missing.
 function handleCheckoutIntent(options = {}) {
   const emptyCartRedirect =
     options.emptyCartRedirect || "index.html#clothing-section";
@@ -1171,6 +1187,7 @@ function handleCheckoutIntent(options = {}) {
   window.location.href = checkoutRedirect;
 }
 
+// Finds the first matching form field from a list of possible field names.
 function findField(form, names) {
   for (const n of names) {
     const el = form.querySelector(`[name="${n}"]`);
@@ -1179,6 +1196,7 @@ function findField(form, names) {
   return null;
 }
 
+// Legacy/local-only save helper kept as a fallback for offline-style order storage.
 async function submitOrderToFirebase(orderData) {
   try {
     const stored = localStorage.getItem("orders") || "[]";
@@ -1202,6 +1220,7 @@ async function submitOrderToFirebase(orderData) {
 // CLOTHING SELECTION & AUTO-SCROLL TO FABRIC
 // =====================================================
 
+// Main page bootstrap: wires shared UI, dynamic catalog rendering, and page-specific logic.
 document.addEventListener("DOMContentLoaded", function () {
   // Update cart count on page load
   cart.updateCartUI();
@@ -1243,6 +1262,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const cartIcon = document.getElementById("cartIcon");
   const nav = document.querySelector("nav");
 
+  // Keeps the cart icon docked in the nav at the top, then floating after scrolling.
   function handleCartPosition() {
     if (!cartIcon || !nav) return;
 
@@ -1273,6 +1293,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // DYNAMIC CLOTHING & FABRIC ITEMS LOADING
     // =====================================================
   
+    // Rebuilds the clothing catalog from localStorage-backed data.
     function renderClothingItems() {
       const typesContainer = document.querySelector(".types");
       if (!typesContainer) return;
@@ -1314,6 +1335,7 @@ document.addEventListener("DOMContentLoaded", function () {
       attachClothingCheckboxListeners();
     }
   
+    // Rebuilds the fabric catalog from localStorage-backed data.
     function renderFabricItems() {
       const fabricGrid = document.querySelector(".fabric-grid");
       if (!fabricGrid) return;
@@ -1354,6 +1376,7 @@ document.addEventListener("DOMContentLoaded", function () {
       attachFabricCheckboxListeners();
     }
   
+    // Reattaches clothing-selection behavior after dynamic re-rendering.
     function attachClothingCheckboxListeners() {
       const clothingCheckboxes = document.querySelectorAll(".second .img-checkbox");
       const fabricSection = document.querySelector(".fabric");
@@ -1377,6 +1400,7 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
   
+    // Reattaches fabric-selection behavior after dynamic re-rendering.
     function attachFabricCheckboxListeners() {
       const fabricCheckboxes = document.querySelectorAll(".fabric .img-checkbox");
     
@@ -1421,6 +1445,7 @@ document.addEventListener("DOMContentLoaded", function () {
     renderClothingItems();
     renderFabricItems();
   
+    // Centralized refresh so catalog updates from admin tabs are applied safely.
     function refreshDynamicItems() {
       try {
         renderClothingItems();

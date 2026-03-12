@@ -1,240 +1,258 @@
-@ -1,239 +0,0 @@
-# Backend Guide (Plain English)
+# Urban Atelier Project Guide
 
-This version is written to be easy to read first, and useful when you come back later to study backend.
+This is the up-to-date plain-English guide for how the whole project works today.
 
-No confusing labels. Just:
+It covers:
 
-- what each backend part does,
-- what happens when an API request comes in,
+- the customer-facing website,
+- the admin dashboard,
+- the add-items workflow,
+- browser storage,
+- the backend API and MongoDB flow.
 
-## Full function-by-function reference
+## Project structure
 
-A separate detailed file now covers every backend/DB function and every page JS function in depth:
+### Customer-facing pages
 
-- [FUNCTION_REFERENCE_GUIDE.md](FUNCTION_REFERENCE_GUIDE.md)
+- `index.html` -> main landing page and product selection flow
+- `cart.html` -> cart review and measurement editing
+- `order.html` -> final checkout form and order submission
+- `yorders.html` -> customer order history and status tracking
+- `styles.css` -> shared styling for the site
+- `script.js` -> main frontend logic
 
----
+### Admin pages
 
-Code: [my-node-express-mongodb-app/src/app.js#L27](my-node-express-mongodb-app/src/app.js#L27)
+- `admin.html` -> admin login and order dashboard
+- `admin.js` -> admin order-management logic
+- `add-items.html` -> admin page for adding/removing clothing and fabrics
+- `add-items.js` -> admin catalog-management logic
+- `admin.css` -> admin styling
 
-Mounts all endpoints under `/api`.
+### Backend
 
----
+- `my-node-express-mongodb-app/src/server.js` -> starts the server and tries to connect to MongoDB
+- `my-node-express-mongodb-app/src/app.js` -> Express app setup, middleware, routes, static serving
+- `my-node-express-mongodb-app/src/config/db.js` -> database connection logic
+- `my-node-express-mongodb-app/src/routes/index.js` -> API routes
+- `my-node-express-mongodb-app/src/controllers/orderController.js` -> order business logic
+- `my-node-express-mongodb-app/src/models/Order.js` -> MongoDB schema for orders
 
-## All API routes and what they do
+## Big-picture flow
 
-### Create order
+### Customer side
 
-- Route code: [my-node-express-mongodb-app/src/routes/index.js#L6](my-node-express-mongodb-app/src/routes/index.js#L6)
-- URL: `POST /api/orders`
-- Uses controller: `createOrder`
+1. Customer opens `index.html`
+2. Clothing and fabric choices are rendered from browser storage
+3. Customer picks clothing, then fabric
+4. Item is added to cart in `localStorage`
+5. Customer saves measurements
+6. Customer goes to `order.html` and places order
+7. Backend stores the order in MongoDB
+8. Customer can later view status in `yorders.html`
 
-### List all orders
+### Admin side
 
-- Route code: [my-node-express-mongodb-app/src/routes/index.js#L7](my-node-express-mongodb-app/src/routes/index.js#L7)
-- URL: `GET /api/orders`
-- Uses controller: `listOrders`
+1. Admin logs in on `admin.html`
+2. Dashboard loads all orders from the backend
+3. Admin can refresh, mark complete, delete one order, or delete all orders
+4. Admin can click `Add Items`
+5. `add-items.html` shows all current clothing and fabric entries
+6. Admin can upload a new image and name for a new clothing or fabric item
+7. Admin can also delete existing catalog items
+8. The customer catalog is updated from browser storage
 
-### Get statuses for selected orders
+## Where product items come from now
 
-- Route code: [my-node-express-mongodb-app/src/routes/index.js#L8](my-node-express-mongodb-app/src/routes/index.js#L8)
-- URL: `GET /api/orders/statuses?ids=id1,id2`
-- Uses controller: `getOrderStatuses`
+The catalog is no longer treated as fixed HTML only.
 
-### Mark order completed
+### Clothing items
 
-- Route code: [my-node-express-mongodb-app/src/routes/index.js#L9](my-node-express-mongodb-app/src/routes/index.js#L9)
-- URL: `PATCH /api/orders/:id/complete`
-- Uses controller: `markCompleted`
+- Stored in browser `localStorage` under `tailorClothing`
+- Each item is stored as an object like:
 
-### Delete one order
+```javascript
+{
+  name: "Tuxedo",
+  image: "assets/tuxedo2.jpg"
+}
+```
 
-- Route code: [my-node-express-mongodb-app/src/routes/index.js#L10](my-node-express-mongodb-app/src/routes/index.js#L10)
-- URL: `DELETE /api/orders/:id`
-- Uses controller: `deleteOrder`
+### Fabric items
 
-### Delete all orders
+- Stored in browser `localStorage` under `tailorFabrics`
+- Each item is stored as an object like:
 
-- Route code: [my-node-express-mongodb-app/src/routes/index.js#L11](my-node-express-mongodb-app/src/routes/index.js#L11)
-- URL: `DELETE /api/orders`
-- Uses controller: `deleteAllOrders`
+```javascript
+{
+  name: "Cotton",
+  image: "data:image/png;base64,..."
+}
+```
 
----
+### Important note
 
-## Controller functions explained
+- Default clothing/fabric items are created automatically if storage is empty
+- New admin uploads are saved as base64 images in browser storage
+- This means item changes are browser-local, not stored in MongoDB
+- If you open the project in a different browser or clear storage, the custom catalog items will not be there unless added again
 
-### `normalizeItems(items)`
+## Storage used in this project
 
-Code: [my-node-express-mongodb-app/src/controllers/orderController.js#L4-L13](my-node-express-mongodb-app/src/controllers/orderController.js#L4-L13)
+### In localStorage
 
-Purpose:
+- `tailorCart` -> customer cart items
+- `tailorMeasurements` -> saved body measurements
+- `customerDetails` -> saved customer form details
+- `orders` -> local order history used by the customer orders page
+- `tailorClothing` -> clothing catalog entries
+- `tailorFabrics` -> fabric catalog entries
+- `tailorItemsVersion` -> a timestamp key used to signal catalog updates across tabs
 
-- Makes incoming item data consistent.
-- Handles slightly different shapes from frontend.
-- Ensures each item has clothing/fabric/quantity/price.
+### In sessionStorage
 
-### `createOrder(req, res)`
+- `adminLoggedIn` -> admin login state for current tab/session
+- `selectedClothing` -> temporary clothing selection before fabric is chosen
 
-Code: [my-node-express-mongodb-app/src/controllers/orderController.js#L15-L54](my-node-express-mongodb-app/src/controllers/orderController.js#L15-L54)
+### In MongoDB
 
-Purpose:
+- Final submitted customer orders
+- Order status (`Pending` or `Completed`)
+- Customer details, measurements, instructions, totals, item list
 
-- Validates required fields (`name`, `phone`).
-- Normalizes items.
-- Calculates fallback total if needed.
-- Saves new order in DB.
-- Returns `id`, `status`, `createdAt`.
+## Customer flow in plain English
 
-### `listOrders(_req, res)`
+### Main shopping page
 
-Code: [my-node-express-mongodb-app/src/controllers/orderController.js#L56-L80](my-node-express-mongodb-app/src/controllers/orderController.js#L56-L80)
+`index.html` does several things:
 
-Purpose:
+- loads the cart state,
+- loads the saved catalog items,
+- renders clothing and fabric options,
+- shows hover labels over clothing and fabric images,
+- lets the customer select clothing first, then fabric,
+- adds the combination to cart,
+- updates the floating cart icon,
+- allows measurements to be saved directly from the site.
 
-- Fetches all orders (latest first).
-- Maps DB output to frontend-friendly response shape.
+### Cart page
 
-### `getOrderStatuses(req, res)`
+`cart.html` shows:
 
-Code: [my-node-express-mongodb-app/src/controllers/orderController.js#L82-L107](my-node-express-mongodb-app/src/controllers/orderController.js#L82-L107)
+- all selected items,
+- quantity controls,
+- remove buttons,
+- total calculation,
+- saved measurement summary,
+- editing flow for measurements.
 
-Purpose:
+### Order page
 
-- Reads `ids` from query string.
-- Keeps only valid ObjectIds.
-- Returns only `{ id, status }` for those orders.
+`order.html` shows:
 
-### `markCompleted(req, res)`
+- order summary,
+- customer contact form,
+- measurement review,
+- instructions field,
+- submit flow that posts to `/api/orders`.
 
-Code: [my-node-express-mongodb-app/src/controllers/orderController.js#L109-L133](my-node-express-mongodb-app/src/controllers/orderController.js#L109-L133)
+### Orders page
 
-Purpose:
+`yorders.html` shows:
 
-- Validates order id.
-- Updates status to `Completed`.
-- Returns updated status.
+- the customer’s local order history,
+- synced status from backend for orders that have remote IDs,
+- pending/completed labels,
+- a clear-history action for local order history.
 
-### `deleteOrder(req, res)`
+## Admin flow in plain English
 
-Code: [my-node-express-mongodb-app/src/controllers/orderController.js#L135-L155](my-node-express-mongodb-app/src/controllers/orderController.js#L135-L155)
+### Order dashboard
 
-Purpose:
+`admin.html` + `admin.js` handle:
 
-- Validates order id.
-- Deletes one order.
-- Returns success/failure message.
+- simple admin login,
+- loading all backend orders,
+- marking an order as completed,
+- deleting one order,
+- deleting all orders,
+- testing API connection,
+- navigating to the add-items page.
 
-### `deleteAllOrders(_req, res)`
+### Add-items page
 
-Code: [my-node-express-mongodb-app/src/controllers/orderController.js#L157-L165](my-node-express-mongodb-app/src/controllers/orderController.js#L157-L165)
+`add-items.html` + `add-items.js` handle:
 
-Purpose:
+- showing current clothing items with image and name,
+- showing current fabric items with image and name,
+- uploading a new clothing image with a required name,
+- uploading a new fabric image with an optional name,
+- previewing selected images before upload,
+- deleting existing clothing/fabric entries,
+- notifying other tabs that catalog items changed.
 
-- Deletes all order documents.
-- Used by admin “Delete All”.
+## Backend API routes
 
----
+All backend routes are mounted under `/api`.
 
-## Database model explained
+### Order routes
 
-### Item schema
+- `POST /api/orders` -> create a new order
+- `GET /api/orders` -> list all orders
+- `GET /api/orders/statuses?ids=id1,id2` -> fetch status only for selected orders
+- `PATCH /api/orders/:id/complete` -> mark an order as completed
+- `DELETE /api/orders/:id` -> delete one order
+- `DELETE /api/orders` -> delete all orders
 
-Code: [my-node-express-mongodb-app/src/models/Order.js#L3-L27](my-node-express-mongodb-app/src/models/Order.js#L3-L27)
+## Backend behavior notes
 
-Each cart item in an order has:
+### Startup behavior
 
-- `clothing`
-- `fabric`
-- `quantity`
-- `price`
+`server.js` loads `.env`, reads `PORT`, and tries to connect to MongoDB.
 
-### Order schema
+If MongoDB connection fails, the server can still start in degraded mode.
+That means:
 
-Code: [my-node-express-mongodb-app/src/models/Order.js#L29-L84](my-node-express-mongodb-app/src/models/Order.js#L29-L84)
+- the app can still serve pages,
+- but database-backed order actions will not work properly until DB connection succeeds.
 
-Each order has:
+### Order controller behavior
 
-- customer info (`name`, `email`, `phone`)
-- instructions
-- item array
-- measurements
-- summary fields (`clothing`, `fabric`, `total`)
-- status (`Pending` or `Completed`)
-- auto timestamps (`createdAt`, `updatedAt`)
+The backend controller:
 
-### Model export
+- validates required fields,
+- normalizes incoming item data,
+- computes fallback totals if needed,
+- stores orders in MongoDB,
+- returns status information used by frontend/admin.
 
-Code: [my-node-express-mongodb-app/src/models/Order.js#L86](my-node-express-mongodb-app/src/models/Order.js#L86)
+## Common editing points
 
-Creates the `Order` model used in controller CRUD operations.
+- Change catalog rendering or cart behavior -> `script.js`
+- Change customer layout or page structure -> `index.html`, `cart.html`, `order.html`, `yorders.html`
+- Change styling -> `styles.css`
+- Change admin dashboard behavior -> `admin.js`, `admin.html`
+- Change add-items workflow -> `add-items.js`, `add-items.html`
+- Change backend order logic -> `my-node-express-mongodb-app/src/controllers/orderController.js`
+- Change schema/data fields -> `my-node-express-mongodb-app/src/models/Order.js`
+- Change route paths -> `my-node-express-mongodb-app/src/routes/index.js`
+- Change DB connection/startup -> `my-node-express-mongodb-app/src/config/db.js`, `my-node-express-mongodb-app/src/server.js`
 
----
+## Known limitations
 
-## JavaScript concepts used in this backend
+- Admin-added catalog items are stored in browser storage, not in MongoDB
+- Because of that, catalog changes are not shared automatically across different browsers or devices
+- Base64 images in localStorage are convenient but not ideal for large-scale production use
+- A future production-ready version should move catalog items and images to the backend/database or object storage
 
-### Async/await and try/catch
+## One-screen mental model
 
-Used in startup and all controllers to handle DB operations safely.
+If you forget the details, remember this:
 
-### Destructuring
+- `script.js` runs almost all customer-side behavior
+- `admin.js` runs order-management behavior for admin
+- `add-items.js` runs catalog-management behavior for admin
+- `localStorage` handles cart, measurements, order history, and current catalog entries
+- Express + MongoDB handle real order persistence and status updates
 
-Used to cleanly read values from `req.body` and `req.params`.
-
-### Array tools (`map`, `reduce`, `filter`)
-
-Used for normalization, totals, and validating IDs.
-
-### Optional chaining (`?.`)
-
-Used to safely read nested item fields.
-
-### Early returns
-
-Used for clean validation flow (400/404 fast exits).
-
----
-
-## Where to edit when you want changes
-
-- Change startup/port behavior → [my-node-express-mongodb-app/src/server.js](my-node-express-mongodb-app/src/server.js)
-- Change middleware/static/root behavior → [my-node-express-mongodb-app/src/app.js](my-node-express-mongodb-app/src/app.js)
-- Change DB connection logic → [my-node-express-mongodb-app/src/config/db.js](my-node-express-mongodb-app/src/config/db.js)
-- Add/change API route path → [my-node-express-mongodb-app/src/routes/index.js](my-node-express-mongodb-app/src/routes/index.js)
-- Change business logic/validation → [my-node-express-mongodb-app/src/controllers/orderController.js](my-node-express-mongodb-app/src/controllers/orderController.js)
-- Change order data fields/rules → [my-node-express-mongodb-app/src/models/Order.js](my-node-express-mongodb-app/src/models/Order.js)
-
----
-
-## Common errors in simple words
-
-### `Could not read package.json`
-
-You ran `npm start` in wrong folder.
-
-### `EADDRINUSE`
-
-Port already occupied by another process.
-
-### `querySrv ECONNREFUSED`
-
-DNS/network issue resolving Atlas SRV URI.
-
-### `Cannot GET /`
-
-Root route/static serving missing or old server version was running.
-
----
-
-## One-screen revision summary
-
-If you forget everything, remember this:
-
-- `server.js` starts things.
-- `app.js` wires middleware and routes.
-- `routes/index.js` points URLs to controller functions.
-- `orderController.js` contains all backend behavior.
-- `models/Order.js` defines what data looks like in MongoDB.
-- `db.js` connects to Atlas.
-
-That’s the whole backend in one mental model.
+That is the current full project model.
