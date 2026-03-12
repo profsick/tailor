@@ -1,68 +1,76 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shopping Cart - Urban Atelier</title>
+    <link href="styles.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+      rel="stylesheet"
+    />
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shopping Cart - Urban Atelier</title>
-  <link href="styles.css" rel="stylesheet" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
-    rel="stylesheet">
+    <script src="script.js" defer></script>
+  </head>
 
-  <script src="script.js" defer></script>
-</head>
+  <body class="cart-page">
+    <nav>
+      <a href="index.html" class="logo-link"><h1>Urban Atelier</h1></a>
+      <div class="nav-right">
+        <a href="index.html" class="contact-us">Back to Shop</a>
+        <a href="yorders.html" class="contact-us orders-link is-hidden"
+          >Your Orders</a
+        >
+      </div>
+    </nav>
 
-<body class="cart-page">
-  <nav>
-    <h1>Urban Atelier - Cart</h1>
-    <div class="nav-right">
-      <a href="index.html" class="contact-us">Back to Shop</a>
-      <a href="yorders.html" class="contact-us orders-link is-hidden">Your Orders</a>
+    <div class="cart-container">
+      <div class="cart-wrapper">
+        <h2 class="cart-heading">Your Shopping Cart</h2>
+
+        <div id="cartItems" class="cart-items-list">
+          <!-- Cart items will be populated here -->
+        </div>
+
+        <div id="emptyCartMessage" class="empty-cart-message is-hidden">
+          <p>Your cart is empty</p>
+          <a href="index.html#clothing-section" class="back-to-shop-btn"
+            >Continue Shopping</a
+          >
+        </div>
+
+        <div id="measurementSection" class="measurements-section is-hidden">
+          <h2>Your Measurements</h2>
+          <div id="measurementsDisplay" class="measurements-grid"></div>
+          <button id="editMeasurementsBtn" class="edit-measurements-btn">
+            Edit Measurements
+          </button>
+        </div>
+
+        <div id="cartSummary" class="cart-summary is-hidden">
+          <div class="summary-row">
+            <span>Total Items:</span>
+            <span id="totalItems">0</span>
+          </div>
+          <div class="summary-row">
+            <span>Total Price:</span>
+            <span id="totalPrice" class="total-price-value">Rs. 0</span>
+          </div>
+          <div class="summary-actions">
+            <button id="clearCartBtn" class="clear-cart-btn">Clear Cart</button>
+            <a href="index.html#clothing-section" class="continue-shopping-btn"
+              >Continue Shopping</a
+            >
+            <button id="proceedBtn" class="proceed-checkout-btn">
+              Proceed to Checkout
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
-  </nav>
 
-  <div class="cart-container">
-    <div class="cart-wrapper">
-      <h2 class="cart-heading">Your Shopping Cart</h2>
-
-      <div id="cartItems" class="cart-items-list">
-        <!-- Cart items will be populated here -->
-      </div>
-
-      <div id="emptyCartMessage" class="empty-cart-message is-hidden">
-        <p>Your cart is empty</p>
-        <a href="index.html#clothing-section" class="back-to-shop-btn">Continue Shopping</a>
-      </div>
-
-      <div id="measurementSection" class="measurements-section is-hidden">
-        <h2>Your Measurements</h2>
-        <div id="measurementsDisplay" class="measurements-grid"></div>
-        <button id="editMeasurementsBtn" class="edit-measurements-btn">Edit Measurements</button>
-      </div>
-
-      <div id="cartSummary" class="cart-summary is-hidden">
-        <div class="summary-row">
-          <span>Total Items:</span>
-          <span id="totalItems">0</span>
-        </div>
-        <div class="summary-row">
-          <span>Total Price:</span>
-          <span id="totalPrice" class="total-price-value">Rs. 0</span>
-        </div>
-        <div class="summary-actions">
-          <button id="clearCartBtn" class="clear-cart-btn">Clear Cart</button>
-          <a href="index.html#clothing-section" class="continue-shopping-btn">Continue Shopping</a>
-          <button id="proceedBtn" class="proceed-checkout-btn">Proceed to Checkout</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <footer>made by kashif</footer>
-
-</body>
-
+    <footer>made by kashif</footer>
+  </body>
 </html>

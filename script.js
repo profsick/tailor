@@ -65,6 +65,55 @@ const PRICING = {
   thobe: 5000,      // A thobe costs ₹5000
 };
 
+  // =====================================================
+  // LOAD ITEMS FROM STORAGE - Clothing and Fabric items
+  // =====================================================
+
+  /**
+   * getClothingItems - Retrieve clothing items from localStorage
+   * @returns {Array} - Array of clothing items with name and image
+   */
+  function getClothingItems() {
+    const defaultClothing = [
+      { name: 'Tuxedo', image: 'assets/tuxedo2.jpg' },
+      { name: 'Trousers', image: 'assets/trousers.jpg' },
+      { name: 'Suit', image: 'assets/suit.jpg' },
+      { name: 'Shirt', image: 'assets/shirt.jpg' },
+      { name: 'Sherwani', image: 'assets/sherwani.jpg' },
+      { name: 'Thobe', image: 'assets/thobe.jpg' }
+    ];
+  
+    try {
+      const stored = localStorage.getItem('tailorClothing');
+      return stored ? JSON.parse(stored) : defaultClothing;
+    } catch (error) {
+      console.error('Error loading clothing items:', error);
+      return defaultClothing;
+    }
+  }
+
+  /**
+   * getFabricItems - Retrieve fabric items from localStorage
+   * @returns {Array} - Array of fabric items with name and image
+   */
+  function getFabricItems() {
+    const defaultFabrics = [
+      { name: '', image: 'assets/fabric.jpg' },
+      { name: '', image: 'assets/fabric.jpg' },
+      { name: '', image: 'assets/fabric.jpg' },
+      { name: '', image: 'assets/fabric.jpg' },
+      { name: '', image: 'assets/fabric.jpg' }
+    ];
+  
+    try {
+      const stored = localStorage.getItem('tailorFabrics');
+      return stored ? JSON.parse(stored) : defaultFabrics;
+    } catch (error) {
+      console.error('Error loading fabric items:', error);
+      return defaultFabrics;
+    }
+  }
+
 // =====================================================
 // CART MANAGEMENT - Stores items customer wants to buy
 // =====================================================
@@ -1220,6 +1269,182 @@ document.addEventListener("DOMContentLoaded", function () {
   // Initial check on page load
   handleCartPosition();
 
+    // =====================================================
+    // DYNAMIC CLOTHING & FABRIC ITEMS LOADING
+    // =====================================================
+  
+    function renderClothingItems() {
+      const typesContainer = document.querySelector(".types");
+      if (!typesContainer) return;
+    
+      const clothing = getClothingItems().filter(
+        (item) => item && typeof item.name === "string" && typeof item.image === "string" && item.image.length > 0,
+      );
+      let html = '';
+    
+      clothing.forEach((item) => {
+        const safeName = item.name.trim() || "Garment";
+        const safeClass = safeName.toLowerCase().replace(/\s+/g, "-");
+        html += `
+          <label class="clothing-label">
+            <input
+              type="checkbox"
+              name="options"
+              value="1"
+              class="img-checkbox clothing-checkbox"
+            />
+            <img
+              src="${item.image}"
+              class="${safeClass} type clothing-img"
+              alt="${safeName}"
+            />
+            <span class="clothing-name">${safeName}</span>
+          </label>
+        `;
+      });
+    
+      typesContainer.innerHTML = html;
+
+      // Dynamic re-renders happen after observers are attached; force reveal.
+      typesContainer
+        .querySelectorAll(".type")
+        .forEach((el) => el.classList.add("animate-on-scroll"));
+    
+      // Reattach clothing checkbox listeners
+      attachClothingCheckboxListeners();
+    }
+  
+    function renderFabricItems() {
+      const fabricGrid = document.querySelector(".fabric-grid");
+      if (!fabricGrid) return;
+    
+      const fabrics = getFabricItems().filter(
+        (item) => item && typeof item.image === "string" && item.image.length > 0,
+      );
+      let html = '';
+    
+      fabrics.forEach((item, index) => {
+        const safeName = (item.name || `Fabric ${index + 1}`).trim() || `Fabric ${index + 1}`;
+        html += `
+          <label class="fabric-label">
+            <input
+              type="checkbox"
+              name="options"
+              value="1"
+              class="img-checkbox fabric-checkbox"
+            />
+            <img
+              src="${item.image}"
+              class="fabric-img"
+              alt="${safeName}"
+            />
+            <span class="fabric-name">${safeName}</span>
+          </label>
+        `;
+      });
+    
+      fabricGrid.innerHTML = html;
+
+      // Dynamic re-renders happen after observers are attached; force reveal.
+      fabricGrid
+        .querySelectorAll(".fabric-img")
+        .forEach((el) => el.classList.add("animate-on-scroll"));
+    
+      // Reattach fabric checkbox listeners
+      attachFabricCheckboxListeners();
+    }
+  
+    function attachClothingCheckboxListeners() {
+      const clothingCheckboxes = document.querySelectorAll(".second .img-checkbox");
+      const fabricSection = document.querySelector(".fabric");
+    
+      clothingCheckboxes.forEach((checkbox) => {
+        checkbox.addEventListener("change", function () {
+          if (this.checked) {
+            const label = this.closest("label");
+            const clothingImg = label.querySelector(".clothing-img");
+            const clothingName = label.querySelector(".clothing-name").textContent;
+            const clothingSrc = clothingImg.src;
+
+            sessionStorage.setItem("selectedClothing", clothingName);
+            if (fabricSection) {
+              fabricSection.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          } else {
+            sessionStorage.removeItem("selectedClothing");
+          }
+        });
+      });
+    }
+  
+    function attachFabricCheckboxListeners() {
+      const fabricCheckboxes = document.querySelectorAll(".fabric .img-checkbox");
+    
+      fabricCheckboxes.forEach((checkbox) => {
+        checkbox.addEventListener("change", function () {
+          if (this.checked) {
+            const selectedClothing = sessionStorage.getItem("selectedClothing");
+
+            if (!selectedClothing) {
+              showNotification("⚠️ Please select a clothing item first!");
+              this.checked = false;
+              return;
+            }
+
+            const label = this.closest("label");
+            const fabricImg = label.querySelector(".fabric-img");
+            const fabricSrc = fabricImg.src;
+
+            // Add to cart
+            cart.addItem(
+              { name: selectedClothing, image: null },
+              { name: "Fabric", image: fabricSrc },
+            );
+
+            // Show feedback
+            showNotification(`${selectedClothing} with fabric added to cart!`);
+
+            // Clear session storage
+            sessionStorage.removeItem("selectedClothing");
+
+            // Reset all checkboxes
+            document.querySelectorAll(".img-checkbox").forEach((cb) => {
+              cb.checked = false;
+            });
+            this.checked = false;
+          }
+        });
+      });
+    }
+  
+    // Render dynamic items on page load
+    renderClothingItems();
+    renderFabricItems();
+  
+    function refreshDynamicItems() {
+      try {
+        renderClothingItems();
+        renderFabricItems();
+      } catch (error) {
+        // If rendering ever fails from malformed data, hard refresh to recover UI.
+        window.location.reload();
+      }
+    }
+
+    // Listen for storage changes from other tabs/windows (admin page).
+    window.addEventListener("storage", (e) => {
+      if (e.key === "tailorClothing" || e.key === "tailorFabrics" || e.key === "tailorItemsVersion") {
+        refreshDynamicItems();
+      }
+    });
+
+    // Also refresh when tab gains focus in case storage event was skipped.
+    window.addEventListener("focus", refreshDynamicItems);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        refreshDynamicItems();
+      }
+    });
   // =====================================================
   // SAVE MEASUREMENTS HANDLER
   // =====================================================

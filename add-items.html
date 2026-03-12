@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Items - Admin</title>
+    <link rel="stylesheet" href="admin.css" />
+    <style>
+      .add-items-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      .back-btn {
+        background: #555;
+        color: white;
+        padding: 0.7rem 1.5rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-bottom: 2rem;
+        font-size: 1rem;
+        transition: background 0.3s;
+      }
+
+      .back-btn:hover {
+        background: #333;
+      }
+
+      .add-items-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+        margin-bottom: 3rem;
+      }
+
+      .item-section {
+        background: #f5f5f5;
+        padding: 2rem;
+        border-radius: 8px;
+      }
+
+      .item-section h2 {
+        margin-bottom: 1.5rem;
+        color: #333;
+      }
+
+      .existing-items {
+        margin-bottom: 2rem;
+      }
+
+      .existing-items h3 {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        color: #555;
+        border-bottom: 2px solid #ddd;
+        padding-bottom: 0.5rem;
+      }
+
+      .items-display {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+
+      .item-card {
+        background: white;
+        border-radius: 6px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s;
+      }
+
+      .item-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .item-card img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+      }
+
+      .item-info {
+        padding: 1rem;
+        text-align: center;
+      }
+
+      .item-name {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+      }
+
+      .item-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+      }
+
+      .delete-btn {
+        background: #ff4444;
+        color: white;
+        border: none;
+        padding: 0.4rem 0.8rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: background 0.3s;
+      }
+
+      .delete-btn:hover {
+        background: #cc0000;
+      }
+
+      .upload-form {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 6px;
+        border: 2px dashed #ddd;
+      }
+
+      .upload-form h3 {
+        margin-bottom: 1rem;
+        color: #333;
+      }
+
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #555;
+        font-weight: 500;
+      }
+
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        padding: 0.7rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+        box-sizing: border-box;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus {
+        outline: none;
+        border-color: #4caf50;
+        box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+      }
+
+      .file-input-wrapper {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+        width: 100%;
+      }
+
+      .file-input-wrapper input[type="file"] {
+        position: absolute;
+        left: -9999px;
+      }
+
+      .file-label {
+        background: #e7f1ff;
+        color: #0066cc;
+        padding: 1rem;
+        border-radius: 4px;
+        text-align: center;
+        cursor: pointer;
+        border: 2px dashed #0066cc;
+        transition: all 0.3s;
+      }
+
+      .file-label:hover {
+        background: #d0e5f9;
+      }
+
+      .file-name {
+        color: #666;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+      }
+
+      .upload-btn {
+        background: #4caf50;
+        color: white;
+        padding: 0.8rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        width: 100%;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: background 0.3s;
+      }
+
+      .upload-btn:hover:not(:disabled) {
+        background: #45a049;
+      }
+
+      .upload-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+
+      .message {
+        padding: 1rem;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+        display: none;
+      }
+
+      .message.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+        display: block;
+      }
+
+      .message.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+        display: block;
+      }
+
+      .image-preview {
+        width: 100%;
+        max-height: 250px;
+        object-fit: cover;
+        border-radius: 4px;
+        margin-top: 1rem;
+      }
+
+      @media (max-width: 768px) {
+        .add-items-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .items-display {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="add-items-container">
+      <button class="back-btn" onclick="window.history.back()">
+        ← Back to Dashboard
+      </button>
+
+      <h1>📦 Manage Items</h1>
+
+      <div class="add-items-grid">
+        <!-- CLOTHING SECTION -->
+        <div class="item-section">
+          <h2>👔 Clothing Items</h2>
+
+          <div class="existing-items">
+            <h3>Existing Clothing</h3>
+            <div id="clothingItems" class="items-display">
+              <!-- Will be populated by JavaScript -->
+            </div>
+          </div>
+
+          <div class="upload-form">
+            <h3>Add New Clothing</h3>
+            <div id="clothingMessage" class="message"></div>
+
+            <div class="form-group">
+              <label for="clothingName">Clothing Name*</label>
+              <input
+                type="text"
+                id="clothingName"
+                placeholder="e.g., Dress Shirt, Blazer"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="clothingImage">Upload Image*</label>
+              <div class="file-input-wrapper">
+                <input
+                  type="file"
+                  id="clothingImage"
+                  accept="image/*"
+                  required
+                />
+                <label for="clothingImage" class="file-label">
+                  <div>📸 Click to select an image</div>
+                  <div class="file-name" id="clothingFileName"></div>
+                </label>
+              </div>
+              <img
+                id="clothingPreview"
+                class="image-preview"
+                style="display: none"
+              />
+            </div>
+
+            <button class="upload-btn" onclick="uploadClothing()">
+              Upload Clothing
+            </button>
+          </div>
+        </div>
+
+        <!-- FABRIC SECTION -->
+        <div class="item-section">
+          <h2>🧵 Fabric Items</h2>
+
+          <div class="existing-items">
+            <h3>Existing Fabrics</h3>
+            <div id="fabricItems" class="items-display">
+              <!-- Will be populated by JavaScript -->
+            </div>
+          </div>
+
+          <div class="upload-form">
+            <h3>Add New Fabric</h3>
+            <div id="fabricMessage" class="message"></div>
+
+            <div class="form-group">
+              <label for="fabricName">Fabric Name (Optional)</label>
+              <input
+                type="text"
+                id="fabricName"
+                placeholder="e.g., Cotton, Silk, Wool"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="fabricImage">Upload Image*</label>
+              <div class="file-input-wrapper">
+                <input type="file" id="fabricImage" accept="image/*" required />
+                <label for="fabricImage" class="file-label">
+                  <div>📸 Click to select an image</div>
+                  <div class="file-name" id="fabricFileName"></div>
+                </label>
+              </div>
+              <img
+                id="fabricPreview"
+                class="image-preview"
+                style="display: none"
+              />
+            </div>
+
+            <button class="upload-btn" onclick="uploadFabric()">
+              Upload Fabric
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="add-items.js" defer></script>
+  </body>
+</html>

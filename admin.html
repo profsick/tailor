@@ -1,48 +1,69 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin - Orders Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Inter:ital,opsz,wght@0,14..32,200..900;1,14..32,200..900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="admin.css" />
+  </head>
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin - Orders Dashboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Inter:ital,opsz,wght@0,14..32,200..900;1,14..32,200..900&display=swap"
-    rel="stylesheet">
-  <link rel="stylesheet" href="admin.css">
-</head>
-
-<body>
-  <!-- Login Form -->
-  <div id="loginPage" class="login-container">
-    <h2>🔐 Admin Login</h2>
-    <p>Enter your credentials to access the orders dashboard</p>
-    <div id="loginError" class="login-error is-hidden"></div>
-    <form class="login-form" onsubmit="handleLogin(event)">
-      <input type="text" id="username" placeholder="Username" required autocomplete="off">
-      <input type="password" id="password" placeholder="Password" required autocomplete="off">
-      <button type="submit">Login</button>
-    </form>
-  </div>
-
-  <!-- Dashboard -->
-  <div id="dashboard" class="is-hidden">
-    <div class="admin-container">
-      <h1> Orders Dashboard</h1>
-      <p class="header-info">Total Orders: <span class="order-count" id="orderCount">0</span></p>
-
-      <div class="btn-group">
-        <button onclick="loadOrders()">🔄 Refresh</button>
-        <button class="danger" onclick="deleteAllOrders()">🗑️ Delete All Orders</button>
-        <button onclick="testConnection()">🧪 Test Connection</button>
-      </div>
-
-      <div id="content"></div>
+  <body>
+    <!-- Login Form -->
+    <div id="loginPage" class="login-container">
+      <h2>🔐 Admin Login</h2>
+      <p>Enter your credentials to access the orders dashboard</p>
+      <div id="loginError" class="login-error is-hidden"></div>
+      <form class="login-form" onsubmit="handleLogin(event)">
+        <input
+          type="text"
+          id="username"
+          placeholder="Username"
+          required
+          autocomplete="off"
+        />
+        <input
+          type="password"
+          id="password"
+          placeholder="Password"
+          required
+          autocomplete="off"
+        />
+        <button type="submit">Login</button>
+      </form>
     </div>
-  </div>
 
-  <script src="admin.js" defer></script>
-</body>
+    <!-- Dashboard -->
+    <div id="dashboard" class="is-hidden">
+      <div class="admin-container">
+        <h1>Orders Dashboard</h1>
+        <p class="header-info">
+          Total Orders: <span class="order-count" id="orderCount">0</span>
+        </p>
 
+        <div class="btn-group">
+          <button onclick="loadOrders()">🔄 Refresh</button>
+          <button class="danger" onclick="deleteAllOrders()">
+            🗑️ Delete All Orders
+          </button>
+          <button onclick="testConnection()">🧪 Test Connection</button>
+          <button
+            onclick="window.location.href = 'add-items.html'"
+            style="background: #4caf50"
+          >
+            📦 Add Items
+          </button>
+        </div>
+
+        <div id="content"></div>
+      </div>
+    </div>
+
+    <script src="admin.js" defer></script>
+  </body>
 </html>
