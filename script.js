@@ -128,6 +128,13 @@ class Cart {
   }
 
   /**
+   * notifyCartChanged - Broadcast cart changes so all cart views can sync
+   */
+  notifyCartChanged() {
+    window.dispatchEvent(new CustomEvent("tailor:cart-updated"));
+  }
+
+  /**
    * addItem - Add a new clothing item to the cart
    * @param {Object} clothing - The clothing object with name and other info
    * @param {Object} fabric - The fabric object with name and other info
@@ -153,6 +160,14 @@ class Cart {
     this.saveToLocalStorage();
     // Update the cart icon and display
     this.updateCartUI();
+    this.notifyCartChanged();
+    // Open cart panel and scroll to clothing section on every add
+    const openPanel = window.__openCartPanel;
+    if (typeof openPanel === "function") openPanel();
+    const clothingSection = document.getElementById("clothing-section");
+    if (clothingSection) {
+      clothingSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
     // Return the new item so caller can use it
     return item;
   }
@@ -168,6 +183,7 @@ class Cart {
     this.saveToLocalStorage();
     // Update the display
     this.updateCartUI();
+    this.notifyCartChanged();
   }
 
   /**
@@ -186,6 +202,7 @@ class Cart {
       this.saveToLocalStorage();
       // Update the display
       this.updateCartUI();
+      this.notifyCartChanged();
     }
   }
 
@@ -258,6 +275,7 @@ class Cart {
     this.saveToLocalStorage();
     // Update the display
     this.updateCartUI();
+    this.notifyCartChanged();
   }
 }
 
@@ -855,11 +873,23 @@ function initCartPage() {
     // Use event delegation for better reliability with dynamic elements
     cartItemsContainer.removeEventListener("click", handleCartClick);
     cartItemsContainer.addEventListener("click", handleCartClick);
+    cartItemsContainer.removeEventListener("change", handleCartChange);
+    cartItemsContainer.addEventListener("change", handleCartChange);
 
     const clearBtn = document.getElementById("clearCartBtn");
     if (clearBtn) {
       clearBtn.removeEventListener("click", handleClearCart);
       clearBtn.addEventListener("click", handleClearCart);
+    }
+  }
+
+  function handleCartChange(e) {
+    if (e.target.classList.contains("qty-input")) {
+      const input = e.target;
+      const itemId = parseInt(input.dataset.id, 10);
+      const newQuantity = parseInt(input.value, 10) || 1;
+      cart.updateQuantity(itemId, newQuantity);
+      displayCart();
     }
   }
 
@@ -879,12 +909,6 @@ function initCartPage() {
         cart.updateQuantity(itemId, item.quantity - 1);
         displayCart();
       }
-    } else if (e.target.classList.contains("qty-input")) {
-      const input = e.target;
-      const itemId = parseInt(input.dataset.id, 10);
-      const newQuantity = parseInt(input.value, 10) || 1;
-      cart.updateQuantity(itemId, newQuantity);
-      displayCart();
     } else if (e.target.classList.contains("remove-item-btn")) {
       const btn = e.target;
       const itemId = parseInt(btn.dataset.id, 10);
@@ -1044,6 +1068,20 @@ function initCartPage() {
       });
     }
   }
+
+  function syncCartPageFromSharedState() {
+    displayCart();
+    displayMeasurements();
+  }
+
+  window.addEventListener("tailor:cart-updated", syncCartPageFromSharedState);
+  window.addEventListener("storage", function (event) {
+    if (event.key === "tailorCart" || event.key === "tailorMeasurements") {
+      cart.items = cart.loadFromLocalStorage();
+      cart.measurements = cart.loadMeasurementsFromLocalStorage();
+      syncCartPageFromSharedState();
+    }
+  });
 
   displayCart();
   displayMeasurements();
@@ -1402,6 +1440,9 @@ document.addEventListener("DOMContentLoaded", function () {
           }, 300);
         } else {
           showNotification("Please select a clothing item first!");
+
+          // Keep state consistent: fabric cannot stay selected without clothing.
+          this.checked = false;
         }
       }
     });
@@ -1427,6 +1468,7 @@ document.addEventListener("DOMContentLoaded", function () {
         <div class="cart-items-placeholder">Loading cart...</div>
       </div>
       <div class="panel-footer">
+        <div class="cart-panel-total" aria-live="polite">Total: Rs. 0</div>
         <button class="view-cart-btn" >View full cart</button>
         <button class="checkout-btn">Checkout</button>
       </div>
@@ -1437,6 +1479,40 @@ document.addEventListener("DOMContentLoaded", function () {
     // Events
     backdrop.addEventListener("click", closeCartPanel);
     panel.querySelector(".close-btn").addEventListener("click", closeCartPanel);
+    panel.querySelector(".panel-body").addEventListener("click", function (e) {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+
+      if (target.classList.contains("panel-qty-btn")) {
+        const itemId = parseInt(target.dataset.id, 10);
+        const item = cart.getItems().find((i) => i.id === itemId);
+        if (!item) return;
+
+        if (target.classList.contains("plus")) {
+          cart.updateQuantity(itemId, item.quantity + 1);
+        } else if (target.classList.contains("minus")) {
+          if (item.quantity > 1) {
+            cart.updateQuantity(itemId, item.quantity - 1);
+          } else {
+            cart.removeItem(itemId);
+          }
+        }
+        refreshCartPanel();
+        return;
+      }
+    });
+
+    panel.querySelector(".panel-body").addEventListener("change", function (e) {
+      const target = e.target;
+      if (!(target instanceof HTMLInputElement)) return;
+      if (!target.classList.contains("panel-qty-input")) return;
+
+      const itemId = parseInt(target.dataset.id, 10);
+      const newQuantity = parseInt(target.value, 10) || 1;
+      cart.updateQuantity(itemId, newQuantity);
+      refreshCartPanel();
+    });
+
     panel
       .querySelector(".view-cart-btn")
       .addEventListener("click", function () {
@@ -1453,13 +1529,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function refreshCartPanel() {
     const panel = document.querySelector(".cart-panel");
-    const backdrop = document.querySelector(".cart-backdrop");
     if (!panel) return;
     const body = panel.querySelector(".panel-body");
+    const totalEl = panel.querySelector(".cart-panel-total");
     const items = cart.getItems();
     if (!items || items.length === 0) {
       body.innerHTML =
         '<p class="cart-panel-empty">Your cart is empty. Add items to get started!</p>';
+      if (totalEl) {
+        totalEl.textContent = "Total: Rs. 0";
+      }
       return;
     }
 
@@ -1471,20 +1550,26 @@ document.addEventListener("DOMContentLoaded", function () {
       totalPrice += itemSubtotal;
       const item = document.createElement("div");
       item.className = "cart-panel-item";
-      item.innerHTML = `<div class="cart-panel-item-title">${it.clothing.name}</div>
-                        <div class="cart-panel-item-meta">${it.fabric.name} — Qty: ${it.quantity}</div>
-                        <div class="cart-panel-item-price">Rs. ${it.price} × ${it.quantity} = Rs. ${itemSubtotal}</div>`;
+      item.innerHTML = `<div class="cart-panel-item-head">
+                          <div class="cart-panel-item-info">
+                            <div class="cart-panel-item-title">${it.clothing.name}</div>
+                            <div class="cart-panel-item-meta">${it.fabric.name} — Qty: ${it.quantity}</div>
+                          </div>
+                          <div class="cart-panel-item-price">Rs. ${itemSubtotal}</div>
+                        </div>
+                        <div class="cart-panel-actions">
+                          <button class="panel-qty-btn minus" data-id="${it.id}" type="button">-</button>
+                          <input class="panel-qty-input" data-id="${it.id}" type="number" min="1" value="${it.quantity}">
+                          <button class="panel-qty-btn plus" data-id="${it.id}" type="button">+</button>
+                        </div>`;
       list.appendChild(item);
     });
 
-    // Add total
-    const totalDiv = document.createElement("div");
-    totalDiv.className = "cart-panel-total";
-    totalDiv.innerHTML = `<strong>Total: Rs. ${totalPrice}</strong>`;
-    list.appendChild(totalDiv);
-
     body.innerHTML = "";
     body.appendChild(list);
+    if (totalEl) {
+      totalEl.innerHTML = `<strong>Total: Rs. ${totalPrice}</strong>`;
+    }
   }
 
   function openCartPanel() {
@@ -1497,6 +1582,7 @@ document.addEventListener("DOMContentLoaded", function () {
       refreshCartPanel();
     }
   }
+  window.__openCartPanel = openCartPanel;
 
   function closeCartPanel() {
     const panel = document.querySelector(".cart-panel");
@@ -1506,6 +1592,14 @@ document.addEventListener("DOMContentLoaded", function () {
       backdrop.classList.remove("visible");
     }
   }
+
+  window.addEventListener("tailor:cart-updated", refreshCartPanel);
+  window.addEventListener("storage", function (event) {
+    if (event.key === "tailorCart") {
+      cart.items = cart.loadFromLocalStorage();
+      refreshCartPanel();
+    }
+  });
 
   if (cartIcon) {
     cartIcon.addEventListener("click", function (e) {

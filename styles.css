@@ -158,11 +158,6 @@ nav img {
   grid-template-columns: 153px 1fr;
   grid-template-rows: 128px 150px 1fr;
   grid-column: 2/4;
-  /* columns: 2 400px;
-  column-gap: 1em;
-  display: block;
-  margin: 1px;
- */
 }
 
 .container {
@@ -230,16 +225,12 @@ h2 {
 }
 
 .types {
-  display: flex;
-  gap: 4rem;
-  align-items: center;
-  justify-content: space-evenly;
-  flex-wrap: wrap;
-}
-
-.types::before,
-.types::after {
-  content: "";
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 2rem;
+  align-items: stretch;
+  width: min(1200px, calc(100% - 4rem));
+  margin: 0 auto;
 }
 
 .clothing-checkbox {
@@ -253,21 +244,18 @@ h2 {
   accent-color: #667eea;
 }
 
-/* Default sizing for clothing images */
-.clothing-img,
-.type {
-  width: 200px;
-  height: 300px;
-  object-fit: cover;
-}
-
 .types label {
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
+  display: block;
   position: relative;
+  width: 100%;
+}
+
+.clothing-label {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .types label:nth-child(2) {
@@ -283,6 +271,10 @@ h2 {
 }
 
 .type {
+  width: 100%;
+  min-height: 260px;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
   border: 3px solid #ddd;
   cursor: pointer;
   border-radius: 8px;
@@ -292,31 +284,72 @@ h2 {
 
 .clothing-img {
   transition: all 0.3s ease;
-  transform-origin: center;
+  width: 100%;
+  height: auto;
+  min-height: 260px;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
 }
 
 .clothing-name {
-  font-size: 1.6rem;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
   color: #ffffff;
-  font-weight: 500;
-  margin-top: 0.8rem;
-  text-transform: capitalize;
+  font-weight: 600;
+  text-transform: lowercase;
+  letter-spacing: 0.12em;
+  background: rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  z-index: 2;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
 }
 
-.type:hover {
-  transform: scale(1.15);
+.clothing-label:hover .clothing-name {
+  opacity: 1;
+}
+
+.clothing-label:hover .clothing-img {
+  filter: blur(3px);
+}
+
+.clothing-label:hover .clothing-img,
+.clothing-label:focus-within .clothing-img {
+  transform: scale(1.05);
   border-color: #667eea;
   box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+}
+
+.clothing-label:hover .clothing-name,
+.clothing-label:focus-within .clothing-name {
+  opacity: 1;
 }
 
 .clothing-checkbox:checked + .clothing-img {
-  transform: scale(1.15);
+  transform: scale(1.05);
   border-color: #667eea;
   box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
 }
 
-.shirt {
-  padding: 5rem 0;
+@media (max-width: 640px) {
+  .types {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.2rem;
+    width: calc(100% - 2rem);
+  }
+
+  .clothing-img,
+  .type {
+    min-height: 200px;
+  }
+
+  .clothing-name {
+    font-size: 1.6rem;
+  }
 }
 
 /* =========================================================
@@ -551,20 +584,19 @@ h2 {
 }
 
 .fabric-grid {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 2rem;
-  align-items: center;
-  justify-content: space-evenly;
-  flex-wrap: wrap;
-  margin: 3rem 0;
+  align-items: stretch;
+  width: min(1200px, calc(100% - 4rem));
+  margin: 3rem auto;
 }
 
 .fabric-grid label {
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
+  display: block;
+  position: relative;
+  width: 100%;
 }
 
 .fabric-grid label:nth-child(1) {
@@ -589,6 +621,8 @@ h2 {
 
 .fabric-label {
   position: relative;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .fabric-checkbox {
@@ -604,8 +638,10 @@ h2 {
 
 /* Default sizing for fabric images */
 .fabric-grid .fabric-img {
-  width: 200px;
-  height: 300px;
+  width: 100%;
+  height: auto;
+  min-height: 260px;
+  aspect-ratio: 2 / 3;
   object-fit: cover;
   border: 3px solid #ddd;
   cursor: pointer;
@@ -616,13 +652,13 @@ h2 {
 }
 
 .fabric-grid .fabric-img:hover {
-  transform: scale(1.15);
+  transform: scale(1.05);
   border-color: #667eea;
   box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
 }
 
 .fabric-checkbox:checked + .fabric-img {
-  transform: scale(1.15);
+  transform: scale(1.05);
   border-color: #667eea;
   box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
 }
@@ -706,6 +742,7 @@ h2 {
   background: #111;
   padding: 2rem;
   border-radius: 10px;
+    
 }
 
 .measurements-summary h4 {
@@ -750,6 +787,7 @@ h2 {
   cursor: pointer;
   font-size: 1.1rem;
   transition: background 0.3s ease;
+  
 }
 
 .measurements-summary .edit-measurements-btn:hover {
@@ -913,7 +951,7 @@ h2 {
   text-align: center;
   font-size: 3.4rem;
   margin-bottom: 3rem;
-  color: #ffffff;
+  color: #454545;
   font-family: "EB Garamond", serif;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -1638,6 +1676,7 @@ h2 {
   cursor: pointer;
   font-size: 1.1rem;
   transition: background 0.3s ease;
+
 }
 
 .cart-page .edit-measurements-btn:hover {
@@ -1743,7 +1782,7 @@ h2 {
 
 .cart-panel-empty {
   color: #7d8597;
-  font-size: 1.4rem;
+  font-size: 18px;
 }
 
 .cart-items-list-panel {
@@ -1756,15 +1795,89 @@ h2 {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.cart-panel-item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.cart-panel-item-info {
+  min-width: 0;
+}
+
 .cart-panel-item-title {
   font-weight: 600;
-  font-size: 1.2rem;
+  font-size: 22px;
   color: #ffffff;
 }
 
 .cart-panel-item-meta {
-  font-size: 0.95rem;
+  font-size: 16px;
   color: #7d8597;
+}
+
+.cart-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 0.9rem;
+  margin-bottom: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.panel-qty-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(102, 126, 234, 0.25);
+  color: #dfe6ff;
+  cursor: pointer;
+  font-size: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+}
+
+.panel-qty-btn:hover {
+  background: rgba(102, 126, 234, 0.45);
+}
+
+.panel-qty-input {
+  width: 58px;
+  height: 36px;
+  padding: 0.4rem;
+  text-align: center;
+  font-size: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #ffffff;
+}
+
+.panel-qty-input:focus {
+  outline: none;
+  border-color: rgba(102, 126, 234, 0.55);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.panel-remove-btn {
+  padding: 0.6rem 1.2rem;
+  background: rgba(231, 76, 60, 0.2);
+  color: #ffd3cf;
+  border: 1px solid rgba(231, 76, 60, 0.45);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  transition: background 0.3s ease;
+}
+
+.panel-remove-btn:hover {
+  background: rgba(231, 76, 60, 0.35);
 }
 
 .phone-validation-message.new {
@@ -1921,23 +2034,29 @@ footer {
   padding: 1.2rem 1.4rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   color: #ffffff;
+  font-size: 22px;
 }
 
 .cart-panel .panel-body {
   padding: 1.2rem;
   overflow: auto;
   flex: 1 1 auto;
+  font-size: 16px;
+  line-height: 1.35;
 }
 
 .cart-panel .panel-footer {
   padding: 1rem;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
 }
 
 .cart-panel .close-btn {
   background: transparent;
   border: none;
-  font-size: 2.2rem;
+  font-size: 30px;
   line-height: 1;
   cursor: pointer;
   color: #ffffff;
@@ -1948,10 +2067,11 @@ footer {
   width: 100%;
   padding: 1rem;
   border-radius: 999px;
-  font-size: 1.6rem;
+  font-size: 20px;
+  font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
-  margin-bottom: 1rem;
+  margin-bottom: 0;
 }
 
 .cart-panel .view-cart-btn {
@@ -2196,23 +2316,26 @@ footer {
 
 .cart-panel-item-price {
   color: #dfe6ff;
-  font-size: 1.3rem;
+  font-size: 20px;
   font-weight: 600;
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+  white-space: nowrap;
+  text-align: right;
 }
 
 .cart-panel-total {
-  background: rgba(102, 126, 234, 0.16);
-  padding: 1rem;
-  border-radius: 10px;
-  margin-top: 1rem;
-  text-align: center;
+  background: transparent;
+  padding: 0.4rem 0;
+  border-radius: 0;
+  margin-top: 0;
+  text-align: left;
   color: #dfe6ff;
-  font-size: 1.5rem;
-  border-top: 2px solid rgba(102, 126, 234, 0.6);
-  padding-top: 1rem;
+  font-size: 24px;
+  border-top: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.7rem;
 }
 
 /* =========================================================
@@ -2576,8 +2699,16 @@ footer {
   /* Hero Section */
   .front {
     font-size: 4rem;
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
+    height: auto;
+    padding: 0;
+  }
+
+  .front h1 {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 1.5rem;
   }
 
   .aura {
@@ -2585,51 +2716,79 @@ footer {
   }
 
   .container {
+    display: flex;
     flex-direction: column;
-    gap: 3rem;
+    gap: 0;
+    width: 100%;
+    padding: 0;
+    max-width: 100%;
   }
 
   .img-container {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto;
+    columns: 2;
+    column-gap: 3px;
     width: 100%;
-    gap: 1rem;
+    display: block;
   }
 
-  /* Clothing Selection - Make images wrap */
+  .grid-img {
+    width: 100%;
+    display: block;
+    margin-bottom: 3px;
+    break-inside: avoid;
+    border-radius: 4px;
+    object-fit: cover;
+    min-width: 0;
+    height: auto;
+  }
+
+  .img-container .grid-img:nth-child(odd) {
+    aspect-ratio: unset;
+  }
+
+  .img-container .grid-img:nth-child(even) {
+    aspect-ratio: unset;
+  }
+
+  .model2,
+  .anotherone {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  /* Clothing Selection */
   .types {
-    flex-wrap: wrap;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 2rem;
     padding: 0 2rem;
+    width: calc(100% - 4rem);
   }
 
   .types label {
-    flex: 0 0 calc(50% - 1rem);
-    max-width: calc(50% - 1rem);
+    width: 100%;
   }
 
   .clothing-img,
   .type {
-    width: 100% !important;
-    height: auto !important;
-    max-width: 250px;
+    width: 100%;
+    max-width: 100%;
   }
 
   /* Fabric Grid */
   .fabric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.5rem;
     padding: 0 2rem;
+    width: calc(100% - 4rem);
   }
 
   .fabric-grid label {
-    flex: 0 0 calc(50% - 0.75rem);
-    max-width: calc(50% - 0.75rem);
+    width: 100%;
   }
 
   .fabric-img {
-    width: 100% !important;
-    height: auto !important;
-    max-width: 250px;
+    width: 100%;
+    max-width: 100%;
   }
 
   /* Brand Story */
@@ -2681,9 +2840,17 @@ footer {
   /* Hero Section */
   .front {
     font-size: 3rem;
-    padding: 2rem 1rem;
-    padding-top: 8vh;
     line-height: 1.3;
+    height: auto;
+    padding: 0;
+  }
+
+  .front h1 {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 1rem;
   }
 
   .aura {
@@ -2691,22 +2858,37 @@ footer {
   }
 
   .container {
+    display: flex;
     flex-direction: column;
+    width: 100%;
     padding: 0;
+    gap: 0;
   }
 
   .img-container {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-    gap: 1rem;
+    columns: 2;
+    column-gap: 3px;
     width: 100%;
-    padding: 0 1rem;
+    display: block;
   }
 
   .grid-img {
-    width: 100% !important;
-    max-width: 100%;
-    height: auto !important;
+    width: 100%;
+    display: block;
+    margin-bottom: 3px;
+    break-inside: avoid;
+    border-radius: 4px;
+    object-fit: cover;
+    min-width: 0;
+    height: auto;
+  }
+
+  .img-container .grid-img:nth-child(odd) {
+    aspect-ratio: unset;
+  }
+
+  .img-container .grid-img:nth-child(even) {
+    aspect-ratio: unset;
   }
 
   .model2,
@@ -2723,7 +2905,7 @@ footer {
     padding: 0 1rem;
   }
 
-  /* Clothing Selection - Stack vertically on mobile */
+  /* Clothing Selection */
   .second {
     height: auto;
     min-height: 100vh;
@@ -2731,27 +2913,20 @@ footer {
   }
 
   .types {
-    flex-direction: column;
-    gap: 2rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.2rem;
     padding: 0 1.5rem;
-  }
-
-  .types::before,
-  .types::after {
-    display: none;
+    width: calc(100% - 3rem);
   }
 
   .types label {
-    flex: 0 0 100%;
-    max-width: 100%;
     width: 100%;
   }
 
   .clothing-img,
   .type {
-    width: 100% !important;
-    height: auto !important;
-    max-width: 100%;
+    width: 100%;
+    min-height: 180px;
   }
 
   .clothing-checkbox {
@@ -2769,21 +2944,19 @@ footer {
   }
 
   .fabric-grid {
-    flex-direction: column;
-    gap: 2rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.2rem;
     padding: 0;
+    width: calc(100% - 3rem);
   }
 
   .fabric-grid label {
-    flex: 0 0 100%;
-    max-width: 100%;
     width: 100%;
   }
 
   .fabric-img {
-    width: 100% !important;
-    height: auto !important;
-    max-width: 100%;
+    width: 100%;
+    min-height: 180px;
   }
 
   .fabric-checkbox {
@@ -2903,6 +3076,10 @@ footer {
     font-size: 2.5rem;
   }
 
+  .img-container {
+    grid-template-columns: 1fr;
+  }
+
   .aura {
     font-size: 5rem;
   }
@@ -2950,6 +3127,14 @@ footer {
   .type {
     object-fit: cover;
     display: block;
+  }
+}
+
+@media (hover: none), (max-width: 768px) {
+  .grid-img:hover {
+    transform: none;
+    box-shadow: none;
+    border: none;
   }
 }
 
