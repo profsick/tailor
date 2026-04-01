@@ -1,0 +1,11 @@
+{
+  "name": "tailor-workspace",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Root scripts for Urban Atelier workspace",
+  "scripts": {
+    "start": "npm --prefix my-node-express-mongodb-app start",
+    "dev": "npm --prefix my-node-express-mongodb-app run dev",
+    "install:backend": "npm --prefix my-node-express-mongodb-app install"
+  }
+}

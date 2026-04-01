@@ -5,15 +5,13 @@ Use this every time you open or close the project.
 ## 1) Open project
 
 1. Open VS Code folder:
-   - `C:\Users\Rehana\OneDrive\Desktop\tailor`
+   - `C:\Users\acer\Documents\GitHub\tailor`
 2. Open terminal in VS Code.
-3. Go to backend folder:
-   - `cd my-node-express-mongodb-app`
-4. Start backend:
+3. Start backend from project root:
    - `npm start`
-5. Open app in browser:
+4. Open app in browser:
    - `http://localhost:3001`
-6. Optional health check:
+5. Optional health check:
    - `http://localhost:3001/api/health`
 
 ## 2) Close project safely
@@ -28,7 +26,7 @@ Use this every time you open or close the project.
 
 - You are in the wrong folder.
 - Run:
-  - `cd C:\Users\Rehana\OneDrive\Desktop\tailor\my-node-express-mongodb-app`
+  - `cd C:\Users\acer\Documents\GitHub\tailor`
   - `npm start`
 
 ### Error: `EADDRINUSE` (port already in use)
@@ -53,7 +51,7 @@ Use this every time you open or close the project.
 
 ## 5) Optional convenience
 
-If you want later, we can add one-click scripts:
+One-click scripts are now available from project root:
 
 - `npm run dev` (auto-restart on code changes)
-- a root-level command to start backend faster.
+- `npm run install:backend` (install backend dependencies)

@@ -68,7 +68,7 @@ The catalog is no longer treated as fixed HTML only.
 
 ### Clothing items
 
-- Stored in browser `localStorage` under `tailorClothing`
+- Stored in MongoDB in the `CatalogItem` collection with `type: "clothing"`
 - Each item is stored as an object like:
 
 ```javascript
@@ -80,7 +80,7 @@ The catalog is no longer treated as fixed HTML only.
 
 ### Fabric items
 
-- Stored in browser `localStorage` under `tailorFabrics`
+- Stored in MongoDB in the `CatalogItem` collection with `type: "fabric"`
 - Each item is stored as an object like:
 
 ```javascript
@@ -92,10 +92,9 @@ The catalog is no longer treated as fixed HTML only.
 
 ### Important note
 
-- Default clothing/fabric items are created automatically if storage is empty
-- New admin uploads are saved as base64 images in browser storage
-- This means item changes are browser-local, not stored in MongoDB
-- If you open the project in a different browser or clear storage, the custom catalog items will not be there unless added again
+- Default clothing/fabric items are seeded automatically into MongoDB if the catalog is empty
+- New admin uploads are saved to MongoDB as base64 image strings
+- Catalog updates are now shared across browsers and devices because the source of truth is the database
 
 ## Storage used in this project
 
@@ -105,9 +104,11 @@ The catalog is no longer treated as fixed HTML only.
 - `tailorMeasurements` -> saved body measurements
 - `customerDetails` -> saved customer form details
 - `orders` -> local order history used by the customer orders page
-- `tailorClothing` -> clothing catalog entries
-- `tailorFabrics` -> fabric catalog entries
-- `tailorItemsVersion` -> a timestamp key used to signal catalog updates across tabs
+
+### In MongoDB
+
+- `CatalogItem` collection -> clothing and fabric catalog entries
+- `Order` collection -> finalized customer orders and statuses
 
 ### In sessionStorage
 
@@ -189,7 +190,7 @@ The catalog is no longer treated as fixed HTML only.
 - uploading a new fabric image with an optional name,
 - previewing selected images before upload,
 - deleting existing clothing/fabric entries,
-- notifying other tabs that catalog items changed.
+- syncing catalog updates through the backend and notifying other tabs.
 
 ## Backend API routes
 
@@ -240,10 +241,9 @@ The backend controller:
 
 ## Known limitations
 
-- Admin-added catalog items are stored in browser storage, not in MongoDB
-- Because of that, catalog changes are not shared automatically across different browsers or devices
-- Base64 images in localStorage are convenient but not ideal for large-scale production use
-- A future production-ready version should move catalog items and images to the backend/database or object storage
+- Catalog images are still stored as base64 strings, so very large images can make the database heavy
+- Base64 images stored in MongoDB are convenient for this project but not ideal for large-scale production use
+- A future production-ready version should move images to dedicated object storage if file sizes grow further
 
 ## One-screen mental model
 

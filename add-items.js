@@ -1,14 +1,66 @@
-// Bootstraps the add-items page with saved catalog data and file-input previews.
-window.addEventListener('DOMContentLoaded', () => {
+const API_BASE = window.TAILOR_API_BASE || `${window.location.origin}/api`;
+const catalogChannel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("tailor-catalog") : null;
+
+function getAdminToken() {
+  return sessionStorage.getItem("adminToken") || "";
+}
+
+function apiRequest(path, options = {}) {
+  const token = getAdminToken();
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return fetch(`${API_BASE}${path}`, {
+    headers,
+    ...options,
+  }).then(async (response) => {
+    let payload = null;
+
+    try {
+      payload = await response.json();
+    } catch (error) {
+      payload = null;
+    }
+
+    if (!response.ok) {
+      throw new Error(payload?.message || `Request failed with status ${response.status}`);
+    }
+
+    return payload;
+  });
+}
+
+function broadcastCatalogUpdate() {
+  if (catalogChannel) {
+    catalogChannel.postMessage({ type: "catalog-updated" });
+  }
+}
+
+function requireAdminSession() {
+  if (!sessionStorage.getItem("adminToken")) {
+    window.location.href = "admin.html";
+    return false;
+  }
+
+  return true;
+}
+
+// Bootstraps the add-items page with catalog data from MongoDB.
+window.addEventListener("DOMContentLoaded", async () => {
+  if (!requireAdminSession()) {
+    return;
+  }
+
   loadExistingClothing();
   loadExistingFabrics();
   setupFileInputs();
 });
-
-// Bumps a version key so other open tabs know the catalog changed.
-function notifyItemsUpdated() {
-  localStorage.setItem('tailorItemsVersion', String(Date.now()));
-}
 
 // Wires file inputs so admins get an immediate preview before uploading.
 function setupFileInputs() {
@@ -42,109 +94,69 @@ function setupFileInputs() {
 }
 
 // Renders the current clothing catalog cards in the admin panel.
-function loadExistingClothing() {
-  const clothing = getClothingFromStorage();
+async function loadExistingClothing() {
   const container = document.getElementById('clothingItems');
-  
-  if (clothing.length === 0) {
-    container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #999;">No clothing items yet</p>';
-    return;
-  }
 
-  container.innerHTML = clothing.map((item, index) => `
-    <div class="item-card">
-      <img src="${item.image}" alt="${item.name}">
-      <div class="item-info">
-        <div class="item-name">${item.name}</div>
-        <div class="item-actions">
-          <button class="delete-btn" onclick="deleteClothing(${index})">Delete</button>
+  try {
+    container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #999;">Loading clothing items...</p>';
+    const clothing = await apiRequest('/catalog?type=clothing');
+
+    if (!Array.isArray(clothing) || clothing.length === 0) {
+      container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #999;">No clothing items yet</p>';
+      return;
+    }
+
+    container.innerHTML = clothing.map((item) => `
+      <div class="item-card">
+        <img src="${item.image}" alt="${item.name}">
+        <div class="item-info">
+          <div class="item-name">${item.name}</div>
+          <div class="item-actions">
+            <button class="delete-btn" onclick="deleteCatalogItem('${item.id}')">Delete</button>
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `).join('');
+  } catch (error) {
+    container.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #c00;">Error loading clothing: ${error.message}</p>`;
+  }
 }
 
 // Renders the current fabric catalog cards in the admin panel.
-function loadExistingFabrics() {
-  const fabrics = getFabricsFromStorage();
+async function loadExistingFabrics() {
   const container = document.getElementById('fabricItems');
-  
-  if (fabrics.length === 0) {
-    container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #999;">No fabric items yet</p>';
-    return;
-  }
 
-  container.innerHTML = fabrics.map((item, index) => `
-    <div class="item-card">
-      <img src="${item.image}" alt="${item.name || 'Fabric'}">
-      <div class="item-info">
-        <div class="item-name">${item.name || 'Fabric ' + (index + 1)}</div>
-        <div class="item-actions">
-          <button class="delete-btn" onclick="deleteFabric(${index})">Delete</button>
+  try {
+    container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #999;">Loading fabric items...</p>';
+    const fabrics = await apiRequest('/catalog?type=fabric');
+
+    if (!Array.isArray(fabrics) || fabrics.length === 0) {
+      container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #999;">No fabric items yet</p>';
+      return;
+    }
+
+    container.innerHTML = fabrics.map((item, index) => `
+      <div class="item-card">
+        <img src="${item.image}" alt="${item.name || 'Fabric'}">
+        <div class="item-info">
+          <div class="item-name">${item.name || 'Fabric ' + (index + 1)}</div>
+          <div class="item-actions">
+            <button class="delete-btn" onclick="deleteCatalogItem('${item.id}')">Delete</button>
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
-}
-
-// Reads clothing data from localStorage, falling back to built-in defaults.
-function getClothingFromStorage() {
-  try {
-    const defaultClothing = [
-      { name: 'Tuxedo', image: 'assets/tuxedo2.jpg' },
-      { name: 'Trousers', image: 'assets/trousers.jpg' },
-      { name: 'Suit', image: 'assets/suit.jpg' },
-      { name: 'Shirt', image: 'assets/shirt.jpg' },
-      { name: 'Sherwani', image: 'assets/sherwani.jpg' },
-      { name: 'Thobe', image: 'assets/thobe.jpg' }
-    ];
-    
-    const stored = localStorage.getItem('tailorClothing');
-    if (stored) {
-      return JSON.parse(stored);
-    } else {
-      // Initialize with defaults on first load
-      localStorage.setItem('tailorClothing', JSON.stringify(defaultClothing));
-      return defaultClothing;
-    }
+    `).join('');
   } catch (error) {
-    console.error('Error loading clothing:', error);
-    return [];
+    container.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #c00;">Error loading fabrics: ${error.message}</p>`;
   }
 }
 
-// Reads fabric data from localStorage, falling back to built-in defaults.
-function getFabricsFromStorage() {
-  try {
-    const defaultFabrics = [
-      { name: '', image: 'assets/fabric.jpg' },
-      { name: '', image: 'assets/fabric.jpg' },
-      { name: '', image: 'assets/fabric.jpg' },
-      { name: '', image: 'assets/fabric.jpg' },
-      { name: '', image: 'assets/fabric.jpg' }
-    ];
-    
-    const stored = localStorage.getItem('tailorFabrics');
-    if (stored) {
-      return JSON.parse(stored);
-    } else {
-      // Initialize with defaults on first load
-      localStorage.setItem('tailorFabrics', JSON.stringify(defaultFabrics));
-      return defaultFabrics;
-    }
-  } catch (error) {
-    console.error('Error loading fabrics:', error);
-    return [];
-  }
-}
-
-// Validates and saves a newly uploaded clothing item into browser storage.
+// Validates and saves a newly uploaded clothing item into MongoDB.
 function uploadClothing() {
   const name = document.getElementById('clothingName').value.trim();
   const imageFile = document.getElementById('clothingImage').files[0];
   const messageDiv = document.getElementById('clothingMessage');
 
-  // Validation
   if (!name) {
     showMessage(messageDiv, 'Please enter a clothing name', 'error');
     return;
@@ -155,32 +167,27 @@ function uploadClothing() {
     return;
   }
 
-  // Convert the chosen image to base64 so it can be stored in localStorage.
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = async (e) => {
     try {
       const base64Image = e.target.result;
-      const clothing = getClothingFromStorage();
+      await apiRequest('/catalog', {
+        method: 'POST',
+        body: JSON.stringify({
+          type: 'clothing',
+          name,
+          image: base64Image,
+        }),
+      });
 
-      // Check for duplicate names
-      if (clothing.some(item => item.name.toLowerCase() === name.toLowerCase())) {
-        showMessage(messageDiv, 'This clothing item already exists!', 'error');
-        return;
-      }
-
-      // Add new item
-      clothing.push({ name, image: base64Image });
-      localStorage.setItem('tailorClothing', JSON.stringify(clothing));
-      notifyItemsUpdated();
-
-      // Reset form
       document.getElementById('clothingName').value = '';
       document.getElementById('clothingImage').value = '';
       document.getElementById('clothingFileName').textContent = '';
       document.getElementById('clothingPreview').style.display = 'none';
 
       showMessage(messageDiv, '✅ Clothing added successfully!', 'success');
-      loadExistingClothing();
+      await loadExistingClothing();
+      broadcastCatalogUpdate();
     } catch (error) {
       showMessage(messageDiv, 'Error uploading: ' + error.message, 'error');
     }
@@ -189,7 +196,7 @@ function uploadClothing() {
   reader.readAsDataURL(imageFile);
 }
 
-// Validates and saves a newly uploaded fabric item into browser storage.
+// Validates and saves a newly uploaded fabric item into MongoDB.
 function uploadFabric() {
   const name = document.getElementById('fabricName').value.trim();
   const imageFile = document.getElementById('fabricImage').files[0];
@@ -200,29 +207,27 @@ function uploadFabric() {
     return;
   }
 
-  // Convert the chosen image to base64 so it can be stored in localStorage.
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = async (e) => {
     try {
       const base64Image = e.target.result;
-      const fabrics = getFabricsFromStorage();
-
-      // Add new item
-      fabrics.push({ 
-        name: name || 'Fabric ' + (fabrics.length + 1), 
-        image: base64Image 
+      await apiRequest('/catalog', {
+        method: 'POST',
+        body: JSON.stringify({
+          type: 'fabric',
+          name,
+          image: base64Image,
+        }),
       });
-      localStorage.setItem('tailorFabrics', JSON.stringify(fabrics));
-      notifyItemsUpdated();
 
-      // Reset form
       document.getElementById('fabricName').value = '';
       document.getElementById('fabricImage').value = '';
       document.getElementById('fabricFileName').textContent = '';
       document.getElementById('fabricPreview').style.display = 'none';
 
       showMessage(messageDiv, '✅ Fabric added successfully!', 'success');
-      loadExistingFabrics();
+      await loadExistingFabrics();
+      broadcastCatalogUpdate();
     } catch (error) {
       showMessage(messageDiv, 'Error uploading: ' + error.message, 'error');
     }
@@ -231,27 +236,19 @@ function uploadFabric() {
   reader.readAsDataURL(imageFile);
 }
 
-// Removes one clothing item from the saved catalog after confirmation.
-function deleteClothing(index) {
-  if (confirm('Are you sure you want to delete this clothing item?')) {
-    const clothing = getClothingFromStorage();
-    clothing.splice(index, 1);
-    localStorage.setItem('tailorClothing', JSON.stringify(clothing));
-    notifyItemsUpdated();
-    loadExistingClothing();
-    document.getElementById('clothingMessage').innerHTML = '';
+// Removes one catalog item from MongoDB after confirmation.
+async function deleteCatalogItem(id) {
+  if (!confirm('Are you sure you want to delete this item?')) {
+    return;
   }
-}
 
-// Removes one fabric item from the saved catalog after confirmation.
-function deleteFabric(index) {
-  if (confirm('Are you sure you want to delete this fabric item?')) {
-    const fabrics = getFabricsFromStorage();
-    fabrics.splice(index, 1);
-    localStorage.setItem('tailorFabrics', JSON.stringify(fabrics));
-    notifyItemsUpdated();
-    loadExistingFabrics();
-    document.getElementById('fabricMessage').innerHTML = '';
+  try {
+    await apiRequest(`/catalog/${id}`, { method: 'DELETE' });
+    await loadExistingClothing();
+    await loadExistingFabrics();
+    broadcastCatalogUpdate();
+  } catch (error) {
+    alert('Error deleting item: ' + error.message);
   }
 }
 

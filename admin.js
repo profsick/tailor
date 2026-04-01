@@ -1,24 +1,50 @@
 const API_BASE = window.TAILOR_API_BASE || `${window.location.origin}/api`;
 
-// Hardcoded admin credentials used by the simple browser-side login gate.
-const ADMIN_USERNAME = "em aay";
-const ADMIN_PASSWORD = "alhamdulillah";
+function getAdminToken() {
+  return sessionStorage.getItem("adminToken") || "";
+}
+
+function clearAdminSession() {
+  sessionStorage.removeItem("adminLoggedIn");
+  sessionStorage.removeItem("adminToken");
+}
+
+function showLogin() {
+  document.getElementById("dashboard").classList.add("is-hidden");
+  document.getElementById("loginPage").classList.remove("is-hidden");
+}
+
+function logoutAdmin() {
+  clearAdminSession();
+  showLogin();
+}
 
 // If the admin already logged in during this tab session, skip the login form.
 window.addEventListener("DOMContentLoaded", () => {
   const isLoggedIn = sessionStorage.getItem("adminLoggedIn");
-  if (isLoggedIn === "true") {
+  const token = getAdminToken();
+
+  if (isLoggedIn === "true" && token) {
     showDashboard();
+  } else {
+    showLogin();
   }
 });
 
 // Shared helper for calling backend API endpoints and normalizing error handling.
 async function apiRequest(path, options = {}) {
+  const token = getAdminToken();
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
+    headers,
     ...options,
   });
 
@@ -30,6 +56,11 @@ async function apiRequest(path, options = {}) {
   }
 
   if (!response.ok) {
+    if (response.status === 401 && path !== "/admin/login") {
+      clearAdminSession();
+      showLogin();
+    }
+
     throw new Error(
       payload?.message || `Request failed with status ${response.status}`,
     );
@@ -38,8 +69,8 @@ async function apiRequest(path, options = {}) {
   return payload;
 }
 
-// Validates the login form and unlocks the dashboard for the current tab session.
-function handleLogin(event) {
+// Validates credentials through backend auth and stores the returned admin token.
+async function handleLogin(event) {
   event.preventDefault();
   const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value.trim();
@@ -47,12 +78,23 @@ function handleLogin(event) {
 
   errorDiv.classList.add("is-hidden");
 
-  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+  try {
+    const payload = await apiRequest("/admin/login", {
+      method: "POST",
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (!payload?.token) {
+      throw new Error("Login failed: token missing in response");
+    }
+
     sessionStorage.setItem("adminLoggedIn", "true");
+    sessionStorage.setItem("adminToken", payload.token);
+    document.getElementById("password").value = "";
     showDashboard();
-  } else {
+  } catch (error) {
     errorDiv.classList.remove("is-hidden");
-    errorDiv.textContent = "❌ Invalid username or password";
+    errorDiv.textContent = `❌ ${error.message || "Invalid username or password"}`;
     document.getElementById("password").value = "";
   }
 }

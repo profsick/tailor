@@ -65,53 +65,71 @@ const PRICING = {
   thobe: 5000,      // A thobe costs ₹5000
 };
 
+const DEFAULT_CLOTHING_ITEMS = [
+  { name: 'Tuxedo', image: '/assets/tuxedo2.jpg' },
+  { name: 'Trousers', image: '/assets/trousers.jpg' },
+  { name: 'Suit', image: '/assets/suit.jpg' },
+  { name: 'Shirt', image: '/assets/shirt.jpg' },
+  { name: 'Sherwani', image: '/assets/sherwani.jpg' },
+  { name: 'Thobe', image: '/assets/thobe.jpg' }
+];
+
+const DEFAULT_FABRIC_ITEMS = [
+  { name: 'Fabric', image: '/assets/fabric.jpg' },
+  { name: 'Fabric', image: '/assets/fabric.jpg' },
+  { name: 'Fabric', image: '/assets/fabric.jpg' },
+  { name: 'Fabric', image: '/assets/fabric.jpg' },
+  { name: 'Fabric', image: '/assets/fabric.jpg' }
+];
+
+let clothingCatalogItems = [...DEFAULT_CLOTHING_ITEMS];
+let fabricCatalogItems = [...DEFAULT_FABRIC_ITEMS];
+
+async function loadCatalogItemsFromApi() {
+  try {
+    const [clothingItems, fabricItems] = await Promise.all([
+      apiRequest('/catalog?type=clothing'),
+      apiRequest('/catalog?type=fabric')
+    ]);
+
+    clothingCatalogItems = Array.isArray(clothingItems) && clothingItems.length > 0
+      ? clothingItems.map((item) => ({
+          name: item.name || 'Garment',
+          image: item.image || '',
+        })).filter((item) => item.image)
+      : [...DEFAULT_CLOTHING_ITEMS];
+
+    fabricCatalogItems = Array.isArray(fabricItems) && fabricItems.length > 0
+      ? fabricItems.map((item) => ({
+          name: item.name || 'Fabric',
+          image: item.image || '',
+        })).filter((item) => item.image)
+      : [...DEFAULT_FABRIC_ITEMS];
+  } catch (error) {
+    console.error('Error loading catalog items from API:', error);
+    clothingCatalogItems = [...DEFAULT_CLOTHING_ITEMS];
+    fabricCatalogItems = [...DEFAULT_FABRIC_ITEMS];
+  }
+}
+
   // =====================================================
   // LOAD ITEMS FROM STORAGE - Clothing and Fabric items
   // =====================================================
 
   /**
-   * getClothingItems - Retrieve clothing items from localStorage
+   * getClothingItems - Retrieve clothing items from the backend catalog cache
    * @returns {Array} - Array of clothing items with name and image
    */
   function getClothingItems() {
-    const defaultClothing = [
-      { name: 'Tuxedo', image: 'assets/tuxedo2.jpg' },
-      { name: 'Trousers', image: 'assets/trousers.jpg' },
-      { name: 'Suit', image: 'assets/suit.jpg' },
-      { name: 'Shirt', image: 'assets/shirt.jpg' },
-      { name: 'Sherwani', image: 'assets/sherwani.jpg' },
-      { name: 'Thobe', image: 'assets/thobe.jpg' }
-    ];
-  
-    try {
-      const stored = localStorage.getItem('tailorClothing');
-      return stored ? JSON.parse(stored) : defaultClothing;
-    } catch (error) {
-      console.error('Error loading clothing items:', error);
-      return defaultClothing;
-    }
+    return clothingCatalogItems;
   }
 
   /**
-   * getFabricItems - Retrieve fabric items from localStorage
+   * getFabricItems - Retrieve fabric items from the backend catalog cache
    * @returns {Array} - Array of fabric items with name and image
    */
   function getFabricItems() {
-    const defaultFabrics = [
-      { name: '', image: 'assets/fabric.jpg' },
-      { name: '', image: 'assets/fabric.jpg' },
-      { name: '', image: 'assets/fabric.jpg' },
-      { name: '', image: 'assets/fabric.jpg' },
-      { name: '', image: 'assets/fabric.jpg' }
-    ];
-  
-    try {
-      const stored = localStorage.getItem('tailorFabrics');
-      return stored ? JSON.parse(stored) : defaultFabrics;
-    } catch (error) {
-      console.error('Error loading fabric items:', error);
-      return defaultFabrics;
-    }
+    return fabricCatalogItems;
   }
 
 // =====================================================
@@ -1220,8 +1238,8 @@ async function submitOrderToFirebase(orderData) {
 // CLOTHING SELECTION & AUTO-SCROLL TO FABRIC
 // =====================================================
 
-// Main page bootstrap: wires shared UI, dynamic catalog rendering, and page-specific logic.
-document.addEventListener("DOMContentLoaded", function () {
+  // Main page bootstrap: wires shared UI, dynamic catalog rendering, and page-specific logic.
+document.addEventListener("DOMContentLoaded", async function () {
   // Update cart count on page load
   cart.updateCartUI();
   updateOrdersNavLinks();
@@ -1385,19 +1403,249 @@ document.addEventListener("DOMContentLoaded", function () {
         checkbox.addEventListener("change", function () {
           if (this.checked) {
             const label = this.closest("label");
-            const clothingImg = label.querySelector(".clothing-img");
             const clothingName = label.querySelector(".clothing-name").textContent;
-            const clothingSrc = clothingImg.src;
+            const clothingImageSrc = label.querySelector(".clothing-img")?.src || "";
 
             sessionStorage.setItem("selectedClothing", clothingName);
+            sessionStorage.setItem("selectedClothingImage", clothingImageSrc);
             if (fabricSection) {
               fabricSection.scrollIntoView({ behavior: "smooth", block: "start" });
             }
           } else {
             sessionStorage.removeItem("selectedClothing");
+            sessionStorage.removeItem("selectedClothingImage");
           }
         });
       });
+    }
+
+    // Creates (once) and returns the custom in-page selection confirmation modal.
+    function getSelectionConfirmModal() {
+      let modal = document.getElementById("selectionConfirmModal");
+      if (modal) {
+        return {
+          modal,
+          clothing: modal.querySelector("[data-role='clothing']"),
+          fabric: modal.querySelector("[data-role='fabric']"),
+          clothingImage: modal.querySelector("[data-role='clothing-image']"),
+          fabricImage: modal.querySelector("[data-role='fabric-image']"),
+          clothingImageName: modal.querySelector("[data-role='clothing-image-name']"),
+          fabricImageName: modal.querySelector("[data-role='fabric-image-name']"),
+          zoomLayer: modal.querySelector("[data-role='zoom-layer']"),
+          zoomImage: modal.querySelector("[data-role='zoom-image']"),
+          zoomCloseBtn: modal.querySelector("[data-action='zoom-close']"),
+          confirmBtn: modal.querySelector("[data-action='confirm']"),
+          redoBtn: modal.querySelector("[data-action='redo']"),
+          closeBtn: modal.querySelector("[data-action='close']"),
+        };
+      }
+
+      modal = document.createElement("div");
+      modal.id = "selectionConfirmModal";
+      modal.className = "selection-confirm-modal";
+      modal.innerHTML = `
+        <div class="selection-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="selectionConfirmTitle">
+          <button class="selection-confirm-close" data-action="close" aria-label="Close">&times;</button>
+          <h3 id="selectionConfirmTitle">Confirm Selection</h3>
+          <p class="selection-confirm-subtitle">Do you want to add this combination to cart?</p>
+          <div class="selection-confirm-preview-row">
+            <div class="selection-confirm-preview-card">
+              <img data-role="clothing-image" alt="Selected clothing" />
+              <span data-role="clothing-image-name">Clothing</span>
+            </div>
+            <div class="selection-confirm-preview-card">
+              <img data-role="fabric-image" alt="Selected fabric" />
+              <span data-role="fabric-image-name">Fabric</span>
+            </div>
+          </div>
+          <div class="selection-confirm-details">
+            <p><strong>Clothing:</strong> <span data-role="clothing">-</span></p>
+            <p><strong>Fabric:</strong> <span data-role="fabric">-</span></p>
+          </div>
+          <div class="selection-confirm-actions">
+            <button type="button" class="selection-confirm-redo" data-action="redo">Redo</button>
+            <button type="button" class="selection-confirm-add" data-action="confirm">Add To Cart</button>
+          </div>
+          <div class="selection-zoom-layer" data-role="zoom-layer" aria-hidden="true">
+            <button type="button" class="selection-zoom-close" data-action="zoom-close" aria-label="Close zoom">&times;</button>
+            <img data-role="zoom-image" alt="Fabric zoom preview" />
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+      return {
+        modal,
+        clothing: modal.querySelector("[data-role='clothing']"),
+        fabric: modal.querySelector("[data-role='fabric']"),
+        clothingImage: modal.querySelector("[data-role='clothing-image']"),
+        fabricImage: modal.querySelector("[data-role='fabric-image']"),
+        clothingImageName: modal.querySelector("[data-role='clothing-image-name']"),
+        fabricImageName: modal.querySelector("[data-role='fabric-image-name']"),
+        zoomLayer: modal.querySelector("[data-role='zoom-layer']"),
+        zoomImage: modal.querySelector("[data-role='zoom-image']"),
+        zoomCloseBtn: modal.querySelector("[data-action='zoom-close']"),
+        confirmBtn: modal.querySelector("[data-action='confirm']"),
+        redoBtn: modal.querySelector("[data-action='redo']"),
+        closeBtn: modal.querySelector("[data-action='close']"),
+      };
+    }
+
+    // Shows custom confirmation modal and resolves true (add) or false (redo).
+    function showSelectionConfirmDialog({ selectedClothing, fabricName, clothingImageSrc, fabricImageSrc }) {
+      const modalRef = getSelectionConfirmModal();
+      modalRef.clothing.textContent = selectedClothing;
+      modalRef.fabric.textContent = fabricName;
+      if (modalRef.clothingImage) {
+        modalRef.clothingImage.src = clothingImageSrc || "";
+      }
+      if (modalRef.fabricImage) {
+        modalRef.fabricImage.src = fabricImageSrc || "";
+      }
+      if (modalRef.clothingImageName) {
+        modalRef.clothingImageName.textContent = selectedClothing || "Clothing";
+      }
+      if (modalRef.fabricImageName) {
+        modalRef.fabricImageName.textContent = fabricName || "Fabric";
+      }
+      modalRef.modal.classList.add("active");
+      document.body.classList.add("modal-lock");
+
+      let zoomScale = 1;
+      let zoomDirection = 1;
+      const applyZoom = () => {
+        if (modalRef.zoomImage) {
+          modalRef.zoomImage.style.transform = `scale(${zoomScale})`;
+        }
+      };
+
+      const openZoom = () => {
+        if (!modalRef.zoomLayer || !modalRef.zoomImage) return;
+        modalRef.zoomImage.src = fabricImageSrc || "";
+        zoomScale = 1;
+        zoomDirection = 1;
+        applyZoom();
+        modalRef.zoomLayer.classList.add("active");
+      };
+
+      const closeZoom = () => {
+        if (!modalRef.zoomLayer) return;
+        modalRef.zoomLayer.classList.remove("active");
+      };
+
+      return new Promise((resolve) => {
+        let settled = false;
+
+        const cleanup = () => {
+          modalRef.modal.classList.remove("active");
+          document.body.classList.remove("modal-lock");
+          modalRef.confirmBtn.removeEventListener("click", onConfirm);
+          modalRef.redoBtn.removeEventListener("click", onRedo);
+          modalRef.closeBtn.removeEventListener("click", onRedo);
+          if (modalRef.fabricImage) {
+            modalRef.fabricImage.removeEventListener("click", openZoom);
+          }
+          if (modalRef.zoomCloseBtn) {
+            modalRef.zoomCloseBtn.removeEventListener("click", closeZoom);
+          }
+          if (modalRef.zoomLayer) {
+            modalRef.zoomLayer.removeEventListener("click", onZoomBackdrop);
+          }
+          if (modalRef.zoomImage) {
+            modalRef.zoomImage.removeEventListener("click", onZoomClick);
+            modalRef.zoomImage.removeEventListener("wheel", onZoomWheel);
+          }
+        };
+
+        const settle = (value) => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          resolve(value);
+        };
+
+        const onConfirm = () => settle(true);
+        const onRedo = () => settle(false);
+        const onZoomClick = () => {
+          zoomScale = Number((zoomScale + 0.2 * zoomDirection).toFixed(2));
+          if (zoomScale >= 4) {
+            zoomScale = 4;
+            zoomDirection = -1;
+          } else if (zoomScale <= 1) {
+            zoomScale = 1;
+            zoomDirection = 1;
+          }
+          applyZoom();
+        };
+        const onZoomBackdrop = (event) => {
+          if (event.target === modalRef.zoomLayer) {
+            closeZoom();
+          }
+        };
+        const onZoomWheel = (event) => {
+          event.preventDefault();
+          if (event.deltaY < 0) {
+            zoomScale = Math.min(4, Number((zoomScale + 0.1).toFixed(2)));
+          } else {
+            zoomScale = Math.max(1, Number((zoomScale - 0.1).toFixed(2)));
+          }
+          applyZoom();
+        };
+
+        modalRef.confirmBtn.addEventListener("click", onConfirm);
+        modalRef.redoBtn.addEventListener("click", onRedo);
+        modalRef.closeBtn.addEventListener("click", onRedo);
+        if (modalRef.fabricImage) {
+          modalRef.fabricImage.addEventListener("click", openZoom);
+        }
+        if (modalRef.zoomCloseBtn) {
+          modalRef.zoomCloseBtn.addEventListener("click", closeZoom);
+        }
+        if (modalRef.zoomLayer) {
+          modalRef.zoomLayer.addEventListener("click", onZoomBackdrop);
+        }
+        if (modalRef.zoomImage) {
+          modalRef.zoomImage.addEventListener("click", onZoomClick);
+          modalRef.zoomImage.addEventListener("wheel", onZoomWheel, {
+            passive: false,
+          });
+        }
+      });
+    }
+
+    // Confirms clothing+fabric combination before final cart insertion.
+    async function confirmSelectionAndAddToCart({ selectedClothing, fabricName, clothingImageSrc, fabricSrc, triggerCheckbox }) {
+      const userConfirmed = await showSelectionConfirmDialog({
+        selectedClothing,
+        fabricName,
+        clothingImageSrc,
+        fabricImageSrc: fabricSrc,
+      });
+
+      if (userConfirmed) {
+        cart.addItem(
+          { name: selectedClothing, image: null },
+          { name: fabricName, image: fabricSrc },
+        );
+
+        showNotification(`✅ ${selectedClothing} with ${fabricName} added to cart!`);
+        sessionStorage.removeItem("selectedClothing");
+        sessionStorage.removeItem("selectedClothingImage");
+      } else {
+        showNotification("↩️ Selection cleared. Please choose clothing and fabric again.");
+        sessionStorage.removeItem("selectedClothing");
+        sessionStorage.removeItem("selectedClothingImage");
+        const clothingSection = document.getElementById("clothing-section");
+        if (clothingSection) {
+          clothingSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+
+      // Reset visible checkboxes in both outcomes so user can continue cleanly.
+      document.querySelectorAll(".img-checkbox").forEach((cb) => {
+        cb.checked = false;
+      });
+      if (triggerCheckbox) triggerCheckbox.checked = false;
     }
   
     // Reattaches fabric-selection behavior after dynamic re-rendering.
@@ -1408,6 +1656,8 @@ document.addEventListener("DOMContentLoaded", function () {
         checkbox.addEventListener("change", function () {
           if (this.checked) {
             const selectedClothing = sessionStorage.getItem("selectedClothing");
+            const selectedClothingImage =
+              sessionStorage.getItem("selectedClothingImage") || "";
 
             if (!selectedClothing) {
               showNotification("⚠️ Please select a clothing item first!");
@@ -1418,29 +1668,23 @@ document.addEventListener("DOMContentLoaded", function () {
             const label = this.closest("label");
             const fabricImg = label.querySelector(".fabric-img");
             const fabricSrc = fabricImg.src;
+            const fabricName =
+              label.querySelector(".fabric-name")?.textContent?.trim() || "Fabric";
 
-            // Add to cart
-            cart.addItem(
-              { name: selectedClothing, image: null },
-              { name: "Fabric", image: fabricSrc },
-            );
-
-            // Show feedback
-            showNotification(`${selectedClothing} with fabric added to cart!`);
-
-            // Clear session storage
-            sessionStorage.removeItem("selectedClothing");
-
-            // Reset all checkboxes
-            document.querySelectorAll(".img-checkbox").forEach((cb) => {
-              cb.checked = false;
+            confirmSelectionAndAddToCart({
+              selectedClothing,
+              fabricName,
+              clothingImageSrc: selectedClothingImage,
+              fabricSrc,
+              triggerCheckbox: this,
             });
-            this.checked = false;
           }
         });
       });
     }
   
+    await loadCatalogItemsFromApi();
+
     // Render dynamic items on page load
     renderClothingItems();
     renderFabricItems();
@@ -1456,12 +1700,12 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
 
-    // Listen for storage changes from other tabs/windows (admin page).
-    window.addEventListener("storage", (e) => {
-      if (e.key === "tailorClothing" || e.key === "tailorFabrics" || e.key === "tailorItemsVersion") {
+    const catalogChannel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("tailor-catalog") : null;
+    if (catalogChannel) {
+      catalogChannel.onmessage = () => {
         refreshDynamicItems();
-      }
-    });
+      };
+    }
 
     // Also refresh when tab gains focus in case storage event was skipped.
     window.addEventListener("focus", refreshDynamicItems);
@@ -1611,92 +1855,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   populateHomeMeasurementInputs(cart.measurements);
   renderHomeMeasurementSummary();
-
-  // Handle clothing selection (checkboxes in section 3)
-  const clothingCheckboxes = document.querySelectorAll(".second .img-checkbox");
-  const fabricSection = document.querySelector(".fabric");
-
-  clothingCheckboxes.forEach((checkbox) => {
-    checkbox.addEventListener("change", function () {
-      if (this.checked) {
-        // Get the clothing image info
-        const label = this.closest("label");
-        const img = label.querySelector(".type");
-        // Get the actual clothing type (tuxedo, trousers, suit, shirt, sherwani, thobe)
-        const classes = img.className.split(" ");
-        let clothingName = "Garment";
-        for (let cls of classes) {
-          if (
-            [
-              "tuxedo",
-              "trousers",
-              "suit",
-              "shirt",
-              "sherwani",
-              "thobe",
-            ].includes(cls)
-          ) {
-            clothingName = cls.charAt(0).toUpperCase() + cls.slice(1);
-            break;
-          }
-        }
-
-        // Store selected clothing temporarily
-        sessionStorage.setItem("selectedClothing", clothingName);
-
-        // Auto-scroll to fabric section
-        fabricSection.scrollIntoView({ behavior: "smooth" });
-
-        // Uncheck this checkbox after storing
-        setTimeout(() => {
-          this.checked = false;
-        }, 300);
-      }
-    });
-  });
-
-  // =====================================================
-  // FABRIC SELECTION & ADD TO CART
-  // =====================================================
-
-  const fabricCheckboxes = document.querySelectorAll(".fabric .img-checkbox");
-
-  fabricCheckboxes.forEach((checkbox) => {
-    checkbox.addEventListener("change", function () {
-      if (this.checked) {
-        const selectedClothing = sessionStorage.getItem("selectedClothing");
-
-        if (selectedClothing) {
-          // Get fabric image
-          const label = this.closest("label");
-          const fabricImg = label.querySelector(".fabric-img");
-          const fabricSrc = fabricImg.src;
-
-          // Add to cart
-          cart.addItem(
-            { name: selectedClothing, image: null },
-            { name: "Fabric", image: fabricSrc },
-          );
-
-          // Show feedback
-          showNotification(`${selectedClothing} with fabric added to cart!`);
-
-          // Clear session storage
-          sessionStorage.removeItem("selectedClothing");
-
-          // Uncheck this checkbox
-          setTimeout(() => {
-            this.checked = false;
-          }, 300);
-        } else {
-          showNotification("Please select a clothing item first!");
-
-          // Keep state consistent: fabric cannot stay selected without clothing.
-          this.checked = false;
-        }
-      }
-    });
-  });
 
   // Floating cart icon click handler — open slide-over cart panel
   function buildCartPanel() {

@@ -14,7 +14,7 @@ app.use(
 );
 
 // Parse JSON and form bodies sent by the frontend.
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // Expose the root project folder so static HTML/CSS/JS files can be served directly.
