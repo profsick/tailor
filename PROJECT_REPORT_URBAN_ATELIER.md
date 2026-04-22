@@ -10,16 +10,16 @@ BACHELOR OF TECHNOLOGY / BACHELOR OF COMPUTER APPLICATIONS
 Submitted by:
 
 Name: **\*\*\*\***\_**\_**\*\*\*\***
-Roll No: **\*\*\*\*******\*\*\*\***
+Roll No: **\*\*\*\***\*\***\*\*\*\***
 Department: **\*\***\_**\_**\*\***
-College: **\*\*\*\***\_\_****\*\*\*\***
+College: **\*\*\*\***\_\_\***\*\*\*\*\***
 University: **\*\*\*\***\_**\*\*\*\***
 
 Academic Year: 2025-2026
 
 CERTIFICATE
 
-This is to certify that the project report entitled "Urban Atelier - Custom Tailoring Web Application" is a bonafide work carried out by **\*\*\*\*******\*\*\*\*** under my supervision and guidance in partial fulfillment of the requirements for the award of the degree **\*\*\*\*******\*\*\*\*** during the academic year 2025-2026.
+This is to certify that the project report entitled "Urban Atelier - Custom Tailoring Web Application" is a bonafide work carried out by **\*\*\*\*\*\*\*\***\*\*\*\*** under my supervision and guidance in partial fulfillment of the requirements for the award of the degree **\*\*\*\***\*\***\*\*\*\*\*\* during the academic year 2025-2026.
 
 Guide Signature: **\*\*\*\***\_\_**\*\*\*\***
 
@@ -447,7 +447,7 @@ This section explains implementation decisions and development process.
 
 Development Lifecycle Followed
 
-The development lifecycle moved from requirement understanding and frontend prototype creation to cart and measurement logic implementation, backend API creation, database schema integration, admin dashboard integration, catalog storage migration to MongoDB, testing and bug fixes, and finally documentation.
+The development lifecycle moved from requirement understanding and frontend prototype creation to cart and measurement logic implementation, backend API creation, database schema integration, admin dashboard integration, catalog st``orage migration to MongoDB, testing and bug fixes, and finally documentation.
 
 Frontend Development Highlights
 
