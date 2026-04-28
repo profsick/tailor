@@ -56,15 +56,37 @@ npm start
 
 ## Screenshots
 
+These images are shown directly on the repository homepage through this root README.
+
+### Storefront
+
+![Home page](docs/screenshots/home-page.png)
+
+### Cart and Checkout
+
+![Cart page](docs/screenshots/cart-page.png)
+![Checkout page](docs/screenshots/checkout-page.png)
+
+### Orders
+
+![Your orders page](docs/screenshots/your-orders-page.png)
+
+### Admin
+
+![Admin dashboard](docs/screenshots/admin-dashboard.png)
+![Add items page](docs/screenshots/add-items-page.png)
+
+## Screenshot File Names
+
 Put screenshots in `docs/screenshots/` using these names:
 
 - `home-page.png`
 - `cart-page.png`
 - `checkout-page.png`
-- `your-orders-page.png`
-- `admin-login.png`
 - `admin-dashboard.png`
 - `add-items-page.png`
+- `your-orders-page.png`
+- `admin-login.png`
 
 ## Notes
 
