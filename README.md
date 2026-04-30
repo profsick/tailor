@@ -56,8 +56,6 @@ npm start
 
 ## Screenshots
 
-These images are shown directly on the repository homepage through this root README.
-
 ### Storefront
 
 ![Home page](docs/screenshots/home-page.png)
