@@ -1,4 +1,4 @@
-# Urban Atelier Tailor App
+# Urban Atelier - Tailored Clothing Store
 
 Simple full-stack tailor ordering app.
 
